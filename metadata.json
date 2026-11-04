@@ -1,0 +1,8 @@
+{
+  "name": "Remix PackVisual - Ghi Chú \u0026 Trực Quan Hoá Sắp Xếp Đồ Du Lịch",
+  "description": "Ứng dụng trực quan hoá sắp xếp đồ đạc vào vali, túi xách và thùng đồ khi đi du lịch. Quản lý danh sách đồ, di chuyển giữa các túi, kiểm tra trọng lượng và theo dõi tiến độ pack đồ.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
