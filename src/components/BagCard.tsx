@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import { 
-  Luggage, 
-  Trash2, 
-  Plus, 
   Edit2, 
   Check, 
   X, 
   Layers, 
-  Sparkles,
   PackageOpen
 } from 'lucide-react';
 import { LuggageBag, LuggageItem } from '../types/packing';
@@ -27,9 +23,10 @@ interface BagCardProps {
   onMovePouch: (pouchId: string, targetParentLargeBagId: string | null) => void;
   onDeletePouch: (pouchId: string) => void;
   onUpdatePouchName: (pouchId: string, newName: string) => void;
-  onDeleteBag: (bagId: string) => void;
+  onDeleteBag?: (bagId: string) => void;
   onUpdateBagName: (bagId: string, newName: string) => void;
-  onQuickAddItem: (name: string, quantity: number, containerId: string) => void;
+  onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
 export const BagCard: React.FC<BagCardProps> = ({
@@ -44,17 +41,21 @@ export const BagCard: React.FC<BagCardProps> = ({
   onMovePouch,
   onDeletePouch,
   onUpdatePouchName,
-  onDeleteBag,
   onUpdateBagName,
-  onQuickAddItem
+  onUpdateQuantity
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(bag.name);
-  const [isAddingItem, setIsAddingItem] = useState(false);
-  const [newItemName, setNewItemName] = useState('');
 
   const colorStyle = BAG_COLORS[bag.color] || BAG_COLORS.slate;
+
+  // Allow dragging the bag header to the trash bin on the right
+  const handleBagDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'bag', id: bag.id, name: bag.name }));
+    e.dataTransfer.setData('text/plain', bag.id);
+  };
 
   // Dropping into this Large Bag
   const handleDragOver = (e: React.DragEvent) => {
@@ -83,10 +84,8 @@ export const BagCard: React.FC<BagCardProps> = ({
         }
       }
     } catch {
-      // Fallback text/plain
       const id = e.dataTransfer.getData('text/plain');
       if (id) {
-        // Check if it's a pouch or item
         const isPouchObj = allBags.some(b => b.id === id && b.isPouch);
         if (isPouchObj) {
           onMovePouch(id, bag.id);
@@ -104,15 +103,6 @@ export const BagCard: React.FC<BagCardProps> = ({
     setIsEditingName(false);
   };
 
-  const handleAddItemSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newItemName.trim()) {
-      onQuickAddItem(newItemName.trim(), 1, bag.id);
-      setNewItemName('');
-      setIsAddingItem(false);
-    }
-  };
-
   const totalItemsInBag = directItems.length + nestedPouches.reduce((acc, p) => {
     return acc + allItems.filter(i => i.containerId === p.id).length;
   }, 0);
@@ -128,13 +118,18 @@ export const BagCard: React.FC<BagCardProps> = ({
           : 'border-stone-200/90 hover:border-stone-300'
       }`}
     >
-      {/* Bag Header */}
-      <div className={`p-4 border-b border-stone-200 flex items-center justify-between gap-3 ${colorStyle.bgLight}`}>
+      {/* Bag Header (Draggable so user can drag bag to trash) */}
+      <div 
+        draggable
+        onDragStart={handleBagDragStart}
+        className={`p-4 border-b border-stone-200 flex items-center justify-between gap-3 cursor-grab active:cursor-grabbing ${colorStyle.bgLight}`}
+        title="Kéo cả Vali này vào Thùng rác bên phải để xóa"
+      >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <span className={`w-3.5 h-3.5 rounded-full ${colorStyle.dot} shrink-0`} />
 
           {isEditingName ? (
-            <div className="flex items-center gap-1.5 flex-1">
+            <div className="flex items-center gap-1.5 flex-1" onClick={(e) => e.stopPropagation()}>
               <input
                 type="text"
                 value={nameInput}
@@ -142,10 +137,10 @@ export const BagCard: React.FC<BagCardProps> = ({
                 className="px-2.5 py-1 text-sm font-bold border border-stone-300 rounded-lg bg-white w-full"
                 autoFocus
               />
-              <button onClick={handleSaveName} className="p-1.5 bg-stone-900 text-white rounded-lg">
+              <button onClick={handleSaveName} className="p-1.5 bg-stone-900 text-white rounded-lg cursor-pointer">
                 <Check className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => setIsEditingName(false)} className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg">
+              <button onClick={() => setIsEditingName(false)} className="p-1.5 text-stone-500 hover:bg-stone-200 rounded-lg cursor-pointer">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -156,11 +151,12 @@ export const BagCard: React.FC<BagCardProps> = ({
               </h3>
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setNameInput(bag.name);
                   setIsEditingName(true);
                 }}
-                className="p-1 text-stone-400 hover:text-stone-700"
+                className="p-1 text-stone-400 hover:text-stone-700 cursor-pointer"
                 title="Đổi tên nhãn túi"
               >
                 <Edit2 className="w-3 h-3" />
@@ -170,22 +166,9 @@ export const BagCard: React.FC<BagCardProps> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-mono font-bold text-stone-600 bg-white px-2 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
+          <span className="text-xs font-mono font-bold text-stone-600 bg-white px-2.5 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
             {totalItemsInBag} món {nestedPouches.length > 0 ? `· ${nestedPouches.length} pouch` : ''}
           </span>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (confirm(`Bạn có chắc muốn xóa "${bag.name}"? Đồ đạc và các pouch bên trong sẽ được đưa về hàng đợi.`)) {
-                onDeleteBag(bag.id);
-              }
-            }}
-            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-white transition-colors"
-            title="Xóa túi này"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
@@ -218,7 +201,7 @@ export const BagCard: React.FC<BagCardProps> = ({
                   onMovePouch={onMovePouch}
                   onDeletePouch={onDeletePouch}
                   onUpdatePouchName={onUpdatePouchName}
-                  onQuickAddItem={onQuickAddItem}
+                  onUpdateQuantity={onUpdateQuantity}
                 />
               ))}
             </div>
@@ -243,6 +226,7 @@ export const BagCard: React.FC<BagCardProps> = ({
                 onTogglePacked={onTogglePacked}
                 onDeleteItem={onDeleteItem}
                 onMoveItem={onMoveItem}
+                onUpdateQuantity={onUpdateQuantity}
                 isNestedInsidePouch={false}
               />
             ))}
@@ -256,42 +240,6 @@ export const BagCard: React.FC<BagCardProps> = ({
             )}
           </div>
         </div>
-
-        {/* Quick Add Item inside this bag */}
-        {isAddingItem ? (
-          <form onSubmit={handleAddItemSubmit} className="pt-2 flex items-center gap-1.5">
-            <input
-              type="text"
-              value={newItemName}
-              onChange={(e) => setNewItemName(e.target.value)}
-              placeholder="Tên món đồ xếp vào đây..."
-              className="px-3 py-1.5 text-xs border border-stone-300 rounded-lg flex-1 bg-white focus:outline-none focus:ring-1 focus:ring-stone-900"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="px-3 py-1.5 text-xs font-bold text-white bg-stone-900 rounded-lg hover:bg-stone-800"
-            >
-              Thêm
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddingItem(false)}
-              className="px-2.5 py-1.5 text-xs text-stone-500 hover:bg-stone-100 rounded-lg"
-            >
-              Huỷ
-            </button>
-          </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsAddingItem(true)}
-            className="w-full py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-xl border border-dashed border-stone-200 hover:border-stone-300 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Thêm đồ vào {bag.name}</span>
-          </button>
-        )}
       </div>
     </div>
   );

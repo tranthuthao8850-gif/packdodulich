@@ -21,6 +21,7 @@ import { PouchCard } from './components/PouchCard';
 import { ItemCard } from './components/ItemCard';
 import { NewContainerModal } from './components/NewContainerModal';
 import { NewItemModal } from './components/NewItemModal';
+import { TrashBinZone } from './components/TrashBinZone';
 
 export default function App() {
   const [trip, setTrip] = useState<SimpleTripPlan>(loadTrip);
@@ -76,6 +77,23 @@ export default function App() {
     setTrip(prev => ({
       ...prev,
       items: prev.items.filter(item => item.id !== itemId)
+    }));
+  };
+
+  const handleRestoreItem = (restoredItem: LuggageItem) => {
+    setTrip(prev => ({
+      ...prev,
+      items: [restoredItem, ...prev.items]
+    }));
+  };
+
+  const handleUpdateItemQuantity = (itemId: string, newQuantity: number) => {
+    const validQty = Math.max(1, Math.min(999, Math.floor(newQuantity) || 1));
+    setTrip(prev => ({
+      ...prev,
+      items: prev.items.map(item =>
+        item.id === itemId ? { ...item, quantity: validQty } : item
+      )
     }));
   };
 
@@ -299,7 +317,7 @@ export default function App() {
       </header>
 
       {/* 2. MAIN WORKSPACE */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6 lg:pr-40">
         {/* TOP SHELF: ĐỒ CHƯA XẾP VÀO TÚI (Chờ đóng gói) */}
         <section
           onDragOver={(e) => {
@@ -359,6 +377,7 @@ export default function App() {
                     onTogglePacked={handleTogglePacked}
                     onDeleteItem={handleDeleteItem}
                     onMoveItem={handleMoveItem}
+                    onUpdateQuantity={handleUpdateItemQuantity}
                   />
                 ))}
               </div>
@@ -414,7 +433,7 @@ export default function App() {
                     onUpdatePouchName={(id, name) => handleUpdateBagName(id, name)}
                     onDeleteBag={handleDeleteBag}
                     onUpdateBagName={handleUpdateBagName}
-                    onQuickAddItem={(name, quantity, containerId) => handleAddItem(name, quantity, containerId)}
+                    onUpdateQuantity={handleUpdateItemQuantity}
                   />
                 );
               })}
@@ -482,7 +501,7 @@ export default function App() {
                   onMovePouch={handleMovePouch}
                   onDeletePouch={handleDeletePouch}
                   onUpdatePouchName={(id, name) => handleUpdateBagName(id, name)}
-                  onQuickAddItem={(name, quantity, containerId) => handleAddItem(name, quantity, containerId)}
+                  onUpdateQuantity={handleUpdateItemQuantity}
                 />
               ))}
             </div>
@@ -503,6 +522,16 @@ export default function App() {
           </button>
         </div>
       </footer>
+
+      {/* FLOATING RIGHT TRASH BIN ZONE */}
+      <TrashBinZone
+        onDeleteItem={handleDeleteItem}
+        onDeletePouch={handleDeletePouch}
+        onDeleteBag={handleDeleteBag}
+        items={trip.items}
+        bags={trip.bags}
+        onRestoreItem={handleRestoreItem}
+      />
 
       {/* MODALS */}
       <NewContainerModal

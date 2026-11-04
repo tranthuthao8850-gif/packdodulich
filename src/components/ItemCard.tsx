@@ -1,160 +1,119 @@
 import React, { useState } from 'react';
-import { GripVertical, Trash2, CheckCircle2, Circle, ArrowRightLeft } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
 import { LuggageBag, LuggageItem } from '../types/packing';
 
 interface ItemCardProps {
   item: LuggageItem;
-  allBags: LuggageBag[];
+  allBags?: LuggageBag[];
   onTogglePacked: (id: string) => void;
-  onDeleteItem: (id: string) => void;
-  onMoveItem: (itemId: string, targetContainerId: string | null) => void;
+  onDeleteItem?: (id: string) => void;
+  onMoveItem?: (itemId: string, targetContainerId: string | null) => void;
+  onUpdateQuantity?: (itemId: string, quantity: number) => void;
   isNestedInsidePouch?: boolean;
 }
 
 export const ItemCard: React.FC<ItemCardProps> = ({
   item,
-  allBags,
   onTogglePacked,
-  onDeleteItem,
-  onMoveItem,
+  onUpdateQuantity,
   isNestedInsidePouch = false
 }) => {
-  const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const [isEditingQty, setIsEditingQty] = useState(false);
+  const [qtyInput, setQtyInput] = useState(item.quantity.toString());
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isEditingQty) {
+      e.preventDefault();
+      return;
+    }
     e.stopPropagation();
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'item', id: item.id }));
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'item', id: item.id, name: item.name }));
     e.dataTransfer.setData('text/plain', item.id);
+  };
+
+  const handleSaveQty = () => {
+    const val = parseInt(qtyInput, 10);
+    const validQty = isNaN(val) || val < 1 ? 1 : Math.min(val, 999);
+    setQtyInput(validQty.toString());
+    if (onUpdateQuantity) {
+      onUpdateQuantity(item.id, validQty);
+    }
+    setIsEditingQty(false);
   };
 
   return (
     <div
-      draggable
+      draggable={!isEditingQty}
       onDragStart={handleDragStart}
-      className={`group px-2.5 py-1.5 rounded-lg border flex items-center justify-between gap-2 transition-all cursor-grab active:cursor-grabbing relative select-none ${
+      className={`group px-3 py-2 rounded-xl border flex items-center justify-between gap-2.5 transition-all cursor-grab active:cursor-grabbing relative select-none hover:shadow-xs hover:-translate-y-0.5 ${
         item.isPacked
-          ? 'bg-stone-50 border-stone-200 text-stone-400'
+          ? 'bg-stone-50 border-stone-200 text-stone-400 opacity-70'
           : isNestedInsidePouch
-          ? 'bg-white border-stone-200 hover:border-stone-300 shadow-2xs'
-          : 'bg-white border-stone-200/90 hover:border-stone-300 shadow-xs'
+          ? 'bg-white border-stone-200/90 hover:border-stone-300'
+          : 'bg-white border-stone-200 hover:border-stone-300'
       }`}
+      title={isEditingQty ? undefined : "Kéo thả để di chuyển giữa các túi hoặc kéo vào Thùng rác bên phải để xóa"}
     >
-      {/* Left: Drag Handle + Checkbox + Item Name */}
-      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-        <GripVertical className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 shrink-0 cursor-grab" />
-        
+      {/* Checkbox + Item Name */}
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onTogglePacked(item.id);
           }}
-          className="shrink-0 text-stone-400 hover:text-stone-700 focus:outline-none"
+          className="shrink-0 text-stone-400 hover:text-stone-700 focus:outline-none transition-transform active:scale-90 cursor-pointer"
           title={item.isPacked ? 'Đã xếp xong (Bấm để bỏ chọn)' : 'Chưa xếp (Bấm để đánh dấu đã xếp)'}
         >
           {item.isPacked ? (
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           ) : (
-            <Circle className="w-3.5 h-3.5 text-stone-300 hover:text-stone-500" />
+            <Circle className="w-4 h-4 text-stone-300 hover:text-stone-500" />
           )}
         </button>
 
-        <span className={`text-xs font-medium truncate ${item.isPacked ? 'line-through text-stone-400' : 'text-stone-800'}`}>
+        <span className={`text-xs font-semibold truncate ${item.isPacked ? 'line-through text-stone-400' : 'text-stone-800'}`}>
           {item.name}
         </span>
       </div>
 
-      {/* Right: Quantity badge + Move Menu + Delete */}
-      <div className="flex items-center gap-1 shrink-0">
-        <span className="text-[10px] font-mono font-bold text-stone-500 bg-stone-100 px-1.5 py-0.2 rounded">
-          x{item.quantity}
-        </span>
-
-        {/* Move dropdown button */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowMoveMenu(!showMoveMenu);
+      {/* Quantity badge with direct inline number editing */}
+      {isEditingQty ? (
+        <div 
+          onClick={(e) => e.stopPropagation()} 
+          className="flex items-center gap-1 shrink-0 bg-amber-50 px-1 py-0.5 rounded-lg border border-amber-300 shadow-2xs"
+        >
+          <span className="text-[10px] font-mono font-bold text-amber-700">x</span>
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={qtyInput}
+            onChange={(e) => setQtyInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveQty();
+              if (e.key === 'Escape') setIsEditingQty(false);
             }}
-            className="p-1 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100 transition-colors"
-            title="Chuyển sang túi khác..."
-          >
-            <ArrowRightLeft className="w-3 h-3" />
-          </button>
-
-          {showMoveMenu && (
-            <div 
-              onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 top-full mt-1 w-52 bg-white border border-stone-200 rounded-xl shadow-lg p-1.5 z-40 text-xs space-y-0.5"
-            >
-              <div className="text-[10px] font-bold text-stone-400 px-2 py-1 uppercase">
-                Chuyển đồ vật này sang:
-              </div>
-
-              {item.containerId !== null && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onMoveItem(item.id, null);
-                    setShowMoveMenu(false);
-                  }}
-                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 flex items-center gap-1.5"
-                >
-                  <span>⏳ Đồ chưa xếp (Hàng đợi)</span>
-                </button>
-              )}
-
-              {/* Large bags */}
-              {allBags.filter(b => !b.isPouch && b.id !== item.containerId).map(b => (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => {
-                    onMoveItem(item.id, b.id);
-                    setShowMoveMenu(false);
-                  }}
-                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-stone-100 text-stone-900 font-medium flex items-center gap-1.5 truncate"
-                >
-                  <span>🧳 {b.name}</span>
-                </button>
-              ))}
-
-              {/* Pouches */}
-              {allBags.filter(b => b.isPouch && b.id !== item.containerId).map(p => {
-                const parent = allBags.find(b => b.id === p.parentId);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      onMoveItem(item.id, p.id);
-                      setShowMoveMenu(false);
-                    }}
-                    className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-stone-100 text-stone-700 flex items-center gap-1.5 truncate pl-4"
-                  >
-                    <span>👝 {p.name} {parent ? `(trong ${parent.name})` : ''}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+            onBlur={handleSaveQty}
+            autoFocus
+            onFocus={(e) => e.target.select()}
+            className="w-12 px-1 text-xs font-mono font-bold text-stone-900 bg-white border border-amber-400 rounded text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
+          />
         </div>
-
-        {/* Delete item */}
+      ) : (
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onDeleteItem(item.id);
+            setQtyInput(item.quantity.toString());
+            setIsEditingQty(true);
           }}
-          className="p-1 text-stone-300 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
-          title="Xóa đồ vật"
+          className="text-[11px] font-mono font-bold text-stone-600 bg-stone-100 hover:bg-amber-100 hover:text-amber-900 hover:border-amber-300 px-2 py-0.5 rounded-md border border-stone-200/90 transition-all shrink-0 cursor-pointer flex items-center gap-0.5"
+          title="Bấm vào để tự điền số lượng mới"
         >
-          <Trash2 className="w-3 h-3" />
+          <span>x{item.quantity}</span>
         </button>
-      </div>
+      )}
     </div>
   );
 };
