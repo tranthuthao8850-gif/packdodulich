@@ -122,8 +122,8 @@ export const BagCard: React.FC<BagCardProps> = ({
       <div 
         draggable
         onDragStart={handleBagDragStart}
-        className={`p-4 border-b border-stone-200 flex items-center justify-between gap-3 cursor-grab active:cursor-grabbing ${colorStyle.bgLight}`}
-        title="Kéo cả Vali này vào Thùng rác bên phải để xóa"
+        className={`p-3.5 sm:p-4 border-b border-stone-200 flex items-center justify-between gap-3 cursor-grab active:cursor-grabbing ${colorStyle.bgLight}`}
+        title="Kéo cả Vali này vào Thùng rác để xóa"
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <span className={`w-3.5 h-3.5 rounded-full ${colorStyle.dot} shrink-0`} />
@@ -146,7 +146,7 @@ export const BagCard: React.FC<BagCardProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2 min-w-0">
-              <h3 className="text-base font-bold text-stone-900 truncate">
+              <h3 className="text-sm sm:text-base font-bold text-stone-900 truncate">
                 🧳 {bag.name}
               </h3>
               <button
@@ -166,14 +166,14 @@ export const BagCard: React.FC<BagCardProps> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-mono font-bold text-stone-600 bg-white px-2.5 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
+          <span className="text-[11px] sm:text-xs font-mono font-bold text-stone-600 bg-white px-2 sm:px-2.5 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
             {totalItemsInBag} món {nestedPouches.length > 0 ? `· ${nestedPouches.length} pouch` : ''}
           </span>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="p-4 flex-1 space-y-4">
+      <div className="p-3 sm:p-4 flex-1 space-y-3.5 sm:space-y-4">
         {/* SUBSECTION 1: Nested Pouches Inside This Bag */}
         {nestedPouches.length > 0 && (
           <div className="space-y-2">

@@ -45,7 +45,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     <div
       draggable={!isEditingQty}
       onDragStart={handleDragStart}
-      className={`group px-3 py-2 rounded-xl border flex items-center justify-between gap-2.5 transition-all cursor-grab active:cursor-grabbing relative select-none hover:shadow-xs hover:-translate-y-0.5 ${
+      className={`group px-2.5 sm:px-3 py-2 rounded-xl border flex items-center justify-between gap-2 transition-all cursor-grab active:cursor-grabbing relative select-none hover:shadow-xs hover:-translate-y-0.5 ${
         item.isPacked
           ? 'bg-stone-50 border-stone-200 text-stone-400 opacity-70'
           : isNestedInsidePouch
@@ -62,7 +62,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             e.stopPropagation();
             onTogglePacked(item.id);
           }}
-          className="shrink-0 text-stone-400 hover:text-stone-700 focus:outline-none transition-transform active:scale-90 cursor-pointer"
+          className="shrink-0 text-stone-400 hover:text-stone-700 p-0.5 -ml-0.5 focus:outline-none transition-transform active:scale-90 cursor-pointer"
           title={item.isPacked ? 'Đã xếp xong (Bấm để bỏ chọn)' : 'Chưa xếp (Bấm để đánh dấu đã xếp)'}
         >
           {item.isPacked ? (

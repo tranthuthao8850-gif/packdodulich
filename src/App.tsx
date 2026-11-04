@@ -229,66 +229,69 @@ export default function App() {
     <div className="min-h-screen bg-stone-100/70 text-stone-900 font-sans antialiased flex flex-col">
       {/* 1. CLEAN TOP BAR */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
           {/* Brand + Trip Title */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-amber-400 text-stone-900 flex items-center justify-center font-black text-sm shadow-xs shrink-0 tracking-tight">
-              TT
-            </div>
-
+          <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <span className="font-extrabold text-stone-900 tracking-tight text-sm sm:text-base whitespace-nowrap">
-                Thu Thảo đi đâu đấy?
-              </span>
-              <span className="text-stone-300 hidden sm:inline">/</span>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-400 text-stone-900 flex items-center justify-center font-black text-xs sm:text-sm shadow-xs shrink-0 tracking-tight">
+                TT
+              </div>
 
-              {isEditingTitle ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={titleInput}
-                    onChange={(e) => setTitleInput(e.target.value)}
-                    className="px-2.5 py-1 text-xs sm:text-sm font-semibold border border-stone-300 rounded-lg bg-white"
-                    autoFocus
-                  />
-                  <button onClick={handleSaveTitle} className="p-1.5 bg-stone-900 text-white rounded-lg">
-                    <Check className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => setIsEditingTitle(false)} className="p-1.5 text-stone-500 hover:bg-stone-100 rounded-lg">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-stone-600 truncate bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
-                    {trip.title}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setTitleInput(trip.title);
-                      setIsEditingTitle(true);
-                    }}
-                    className="p-1 text-stone-400 hover:text-stone-700 rounded"
-                    title="Đổi tên chuyến đi"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+                <span className="font-extrabold text-stone-900 tracking-tight text-sm sm:text-base whitespace-nowrap">
+                  Thu Thảo đi đâu đấy?
+                </span>
+                <span className="text-stone-300 hidden md:inline">/</span>
+
+                {isEditingTitle ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={titleInput}
+                      onChange={(e) => setTitleInput(e.target.value)}
+                      className="px-2 py-0.5 text-xs sm:text-sm font-semibold border border-stone-300 rounded-lg bg-white w-28 sm:w-48"
+                      autoFocus
+                    />
+                    <button onClick={handleSaveTitle} className="p-1 bg-stone-900 text-white rounded-lg">
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setIsEditingTitle(false)} className="p-1 text-stone-500 hover:bg-stone-100 rounded-lg">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-xs sm:text-sm font-medium text-stone-600 truncate bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200 max-w-[110px] sm:max-w-[200px]">
+                      {trip.title}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setTitleInput(trip.title);
+                        setIsEditingTitle(true);
+                      }}
+                      className="p-1 text-stone-400 hover:text-stone-700 rounded"
+                      title="Đổi tên chuyến đi"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Primary Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end w-full sm:w-auto">
             <button
               onClick={() => {
                 setNewContainerIsPouch(false);
                 setIsNewContainerOpen(true);
               }}
-              className="px-3 py-1.5 text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5 text-stone-600" />
-              <span>+ Thêm Túi / Vali</span>
+              <span className="sm:inline hidden">+ Thêm Túi / Vali</span>
+              <span className="sm:hidden">+ Túi/Vali</span>
             </button>
 
             <button
@@ -296,10 +299,11 @@ export default function App() {
                 setNewContainerIsPouch(true);
                 setIsNewContainerOpen(true);
               }}
-              className="px-3 py-1.5 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap"
             >
               <Layers className="w-3.5 h-3.5 text-teal-700" />
-              <span>+ Thêm Pouch nhỏ</span>
+              <span className="sm:inline hidden">+ Thêm Pouch nhỏ</span>
+              <span className="sm:hidden">+ Pouch</span>
             </button>
 
             <button
@@ -307,7 +311,7 @@ export default function App() {
                 setNewItemInitialContainerId(null);
                 setIsNewItemOpen(true);
               }}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-stone-900 hover:bg-stone-800 rounded-lg transition-colors shadow-xs flex items-center gap-1.5 whitespace-nowrap"
+              className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 text-xs font-bold text-white bg-stone-900 hover:bg-stone-800 rounded-lg transition-colors shadow-xs flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Thêm Đồ</span>
@@ -317,7 +321,7 @@ export default function App() {
       </header>
 
       {/* 2. MAIN WORKSPACE */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6 lg:pr-40">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6 lg:pr-44 xl:pr-48 pb-24 sm:pb-12">
         {/* TOP SHELF: ĐỒ CHƯA XẾP VÀO TÚI (Chờ đóng gói) */}
         <section
           onDragOver={(e) => {
@@ -326,35 +330,35 @@ export default function App() {
           }}
           onDragLeave={() => setIsDropOverUnassigned(false)}
           onDrop={handleDropOnUnassigned}
-          className={`p-4 rounded-2xl border-2 transition-all ${
+          className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all ${
             isDropOverUnassigned
               ? 'border-amber-500 bg-amber-50 ring-4 ring-amber-400/20'
               : 'border-stone-200 bg-white shadow-xs'
           }`}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-stone-100">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
               <h2 className="text-sm font-bold text-stone-900">
                 Đồ chưa xếp vào túi ({unassignedItems.length} món)
               </h2>
-              <span className="text-xs text-stone-500 hidden sm:inline">
+              <span className="text-xs text-stone-500 hidden md:inline">
                 · Kéo thả các món bên dưới vào bất kỳ Vali lớn hoặc Pouch nhỏ nào
               </span>
             </div>
 
             {/* Quick inline input to add item directly */}
-            <form onSubmit={handleQuickAddUnassigned} className="flex items-center gap-1.5 self-start sm:self-auto">
+            <form onSubmit={handleQuickAddUnassigned} className="flex items-center gap-1.5 w-full sm:w-auto">
               <input
                 type="text"
                 value={quickItemText}
                 onChange={(e) => setQuickItemText(e.target.value)}
                 placeholder="Nhập nhanh món đồ cần pack..."
-                className="px-3 py-1 text-xs border border-stone-300 rounded-lg bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 w-52"
+                className="px-3 py-1.5 text-xs border border-stone-300 rounded-lg bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 sm:w-56"
               />
               <button
                 type="submit"
-                className="px-3 py-1 text-xs font-bold text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors whitespace-nowrap"
+                className="px-3.5 py-1.5 text-xs font-bold text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0"
               >
                 + Thêm
               </button>
@@ -368,7 +372,7 @@ export default function App() {
                 Không còn đồ nào trong hàng đợi. Tất cả đã được xếp vào các túi hoặc pouch!
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                 {unassignedItems.map(item => (
                   <ItemCard
                     key={item.id}
