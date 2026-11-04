@@ -214,18 +214,23 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand + Trip Title */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-stone-900 text-amber-400 flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-              PV
+            <div className="w-9 h-9 rounded-xl bg-amber-400 text-stone-900 flex items-center justify-center font-black text-sm shadow-xs shrink-0 tracking-tight">
+              TT
             </div>
 
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <span className="font-extrabold text-stone-900 tracking-tight text-sm sm:text-base whitespace-nowrap">
+                Thu Thảo đi đâu đấy?
+              </span>
+              <span className="text-stone-300 hidden sm:inline">/</span>
+
               {isEditingTitle ? (
                 <div className="flex items-center gap-1.5">
                   <input
                     type="text"
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
-                    className="px-2.5 py-1 text-base font-bold border border-stone-300 rounded-lg bg-white"
+                    className="px-2.5 py-1 text-xs sm:text-sm font-semibold border border-stone-300 rounded-lg bg-white"
                     autoFocus
                   />
                   <button onClick={handleSaveTitle} className="p-1.5 bg-stone-900 text-white rounded-lg">
@@ -237,9 +242,9 @@ export default function App() {
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <h1 className="text-base sm:text-lg font-bold text-stone-900 truncate">
+                  <span className="text-xs sm:text-sm font-medium text-stone-600 truncate bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
                     {trip.title}
-                  </h1>
+                  </span>
                   <button
                     onClick={() => {
                       setTitleInput(trip.title);
@@ -488,7 +493,7 @@ export default function App() {
       {/* 3. CLEAN FOOTER */}
       <footer className="border-t border-stone-200 py-4 px-6 text-xs text-stone-500 bg-white">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <span>PackVisual · Sắp xếp đồ du lịch & lồng ghép pouch trực quan</span>
+          <span>Thu Thảo đi đâu đấy? · Sắp xếp đồ du lịch & lồng ghép pouch trực quan</span>
           <button
             onClick={handleResetToDefault}
             className="text-stone-400 hover:text-stone-700 flex items-center gap-1 text-[11px]"
