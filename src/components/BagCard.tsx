@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Edit2, 
   Check, 
@@ -26,6 +26,7 @@ interface BagCardProps {
   onDeleteBag?: (bagId: string) => void;
   onUpdateBagName: (bagId: string, newName: string) => void;
   onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onUpdateBagWidth?: (bagId: string, width: number) => void;
   onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
@@ -42,11 +43,23 @@ export const BagCard: React.FC<BagCardProps> = ({
   onDeletePouch,
   onUpdatePouchName,
   onUpdateBagName,
-  onUpdateQuantity
+  onUpdateQuantity,
+  onUpdateBagWidth
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(bag.name);
+
+  // Horizontal resizability state
+  const [width, setWidth] = useState<number>(bag.customWidth || 380);
+  const [isResizing, setIsResizing] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (bag.customWidth) {
+      setWidth(bag.customWidth);
+    }
+  }, [bag.customWidth]);
 
   const colorStyle = BAG_COLORS[bag.color] || BAG_COLORS.slate;
 
@@ -103,24 +116,89 @@ export const BagCard: React.FC<BagCardProps> = ({
     setIsEditingName(false);
   };
 
+  // Draggable horizontal resize handle
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+
+    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const initialWidth = cardRef.current?.offsetWidth || width;
+    let latestWidth = initialWidth;
+
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
+      const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const diff = currentX - startX;
+      // Allow card width from 280px up to 1100px
+      const newWidth = Math.max(280, Math.min(1100, Math.round(initialWidth + diff)));
+      latestWidth = newWidth;
+      setWidth(newWidth);
+    };
+
+    const onEnd = () => {
+      setIsResizing(false);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+
+      if (onUpdateBagWidth) {
+        onUpdateBagWidth(bag.id, latestWidth);
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchmove', onMove);
+    window.addEventListener('touchend', onEnd);
+  };
+
   const totalItemsInBag = directItems.length + nestedPouches.reduce((acc, p) => {
     return acc + allItems.filter(i => i.containerId === p.id).length;
   }, 0);
 
   return (
     <div
+      ref={cardRef}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs overflow-hidden ${
+      style={{
+        width: `${width}px`,
+        maxWidth: '100%',
+        flex: `0 1 ${width}px`
+      }}
+      className={`rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs relative group/card ${
+        isResizing ? 'select-none ring-2 ring-amber-400' : ''
+      } ${
         isDragOver
           ? 'border-amber-500 ring-4 ring-amber-400/20 bg-amber-50/20'
           : 'border-stone-200/90 hover:border-stone-300'
       }`}
     >
+      {/* Right Drag-to-Resize Handle */}
+      <div
+        onMouseDown={handleResizeStart}
+        onTouchStart={handleResizeStart}
+        className="absolute top-0 right-0 bottom-0 w-3.5 cursor-ew-resize hover:bg-amber-400/20 active:bg-amber-500/40 flex items-center justify-center transition-colors z-30 group/handle rounded-r-2xl"
+        title="Kéo sang trái hoặc phải để tùy chỉnh độ rộng của khung"
+      >
+        <div className={`w-1 rounded-full transition-all ${
+          isResizing 
+            ? 'h-20 bg-amber-500 w-1.5' 
+            : 'h-8 bg-stone-300 group-hover/handle:bg-amber-500 group-hover/handle:h-14'
+        }`} />
+        
+        {isResizing && (
+          <div className="absolute right-5 top-2 bg-stone-900 text-white text-[10px] font-mono px-2 py-0.5 rounded-md shadow-md whitespace-nowrap pointer-events-none">
+            {width}px
+          </div>
+        )}
+      </div>
+
       {/* Bag Header (Draggable so user can drag bag to trash) */}
       <div 
-        draggable
+        draggable={!isResizing}
         onDragStart={handleBagDragStart}
         className={`p-3.5 sm:p-4 border-b border-stone-200 flex items-center justify-between gap-3 cursor-grab active:cursor-grabbing ${colorStyle.bgLight}`}
         title="Kéo cả Vali này vào Thùng rác để xóa"
@@ -146,7 +224,7 @@ export const BagCard: React.FC<BagCardProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2 min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-stone-900 truncate">
+              <h3 className="text-sm sm:text-base font-bold text-stone-900 break-words leading-tight">
                 🧳 {bag.name}
               </h3>
               <button
@@ -165,7 +243,7 @@ export const BagCard: React.FC<BagCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 pr-2">
           <span className="text-[11px] sm:text-xs font-mono font-bold text-stone-600 bg-white px-2 sm:px-2.5 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
             {totalItemsInBag} món {nestedPouches.length > 0 ? `· ${nestedPouches.length} pouch` : ''}
           </span>

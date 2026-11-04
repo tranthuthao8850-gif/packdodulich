@@ -72,7 +72,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           )}
         </button>
 
-        <span className={`text-xs font-semibold truncate ${item.isPacked ? 'line-through text-stone-400' : 'text-stone-800'}`}>
+        <span className={`text-xs font-semibold break-words leading-snug flex-1 ${item.isPacked ? 'line-through text-stone-400' : 'text-stone-800'}`}>
           {item.name}
         </span>
       </div>

@@ -97,6 +97,20 @@ export default function App() {
     }));
   };
 
+  const handleUpdateBagWidth = (bagId: string, width: number) => {
+    setTrip(prev => ({
+      ...prev,
+      bags: prev.bags.map(b => b.id === bagId ? { ...b, customWidth: width } : b)
+    }));
+  };
+
+  const handleSetAllBagsWidth = (width: number) => {
+    setTrip(prev => ({
+      ...prev,
+      bags: prev.bags.map(b => (!b.isPouch ? { ...b, customWidth: width } : b))
+    }));
+  };
+
   const handleAddItem = (name: string, quantity: number, containerId: string | null) => {
     const newItem: LuggageItem = {
       id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -391,14 +405,46 @@ export default function App() {
 
         {/* SECTION 1: CÁC TÚI LỚN & VALI CHÍNH */}
         <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
               <Luggage className="w-4 h-4 text-stone-700" />
-              <span>Các Túi lớn, Vali & Thùng đựng ({largeBags.length})</span>
-            </h2>
-            <span className="text-xs text-stone-500">
-              Mẹo: Bạn có thể kéo thả đồ vật trực tiếp vào vali, hoặc kéo thả cả một pouch nhỏ vào trong vali!
-            </span>
+              <h2 className="text-sm font-bold text-stone-900">
+                Các Túi lớn, Vali & Thùng đựng ({largeBags.length})
+              </h2>
+            </div>
+
+            {/* Quick width presets & tip */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[11px] text-stone-400 hidden sm:inline">
+                ↔ Kéo mép phải khung hoặc chọn cỡ:
+              </span>
+              <div className="flex items-center bg-white border border-stone-200 rounded-lg p-0.5 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => handleSetAllBagsWidth(360)}
+                  className="px-2 py-0.5 text-[11px] font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded cursor-pointer"
+                  title="Đặt cỡ chuẩn (360px)"
+                >
+                  Chuẩn
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetAllBagsWidth(480)}
+                  className="px-2 py-0.5 text-[11px] font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded cursor-pointer"
+                  title="Đặt cỡ rộng (480px)"
+                >
+                  Rộng
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetAllBagsWidth(680)}
+                  className="px-2 py-0.5 text-[11px] font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded cursor-pointer"
+                  title="Đặt cỡ rất rộng (680px)"
+                >
+                  Rất rộng
+                </button>
+              </div>
+            </div>
           </div>
 
           {largeBags.length === 0 ? (
@@ -416,7 +462,7 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
+            <div className="flex flex-wrap gap-4 sm:gap-5 items-start">
               {largeBags.map(bag => {
                 const directItems = trip.items.filter(i => i.containerId === bag.id);
                 const nestedPouches = pouches.filter(p => p.parentId === bag.id);
@@ -438,6 +484,7 @@ export default function App() {
                     onDeleteBag={handleDeleteBag}
                     onUpdateBagName={handleUpdateBagName}
                     onUpdateQuantity={handleUpdateItemQuantity}
+                    onUpdateBagWidth={handleUpdateBagWidth}
                   />
                 );
               })}
@@ -453,7 +500,7 @@ export default function App() {
           }}
           onDragLeave={() => setIsDropOverStandalonePouches(false)}
           onDrop={handleDropOnStandalonePouches}
-          className={`p-5 rounded-2xl border-2 transition-all space-y-3 ${
+          className={`p-4 sm:p-5 rounded-2xl border-2 transition-all space-y-3 ${
             isDropOverStandalonePouches
               ? 'border-teal-500 bg-teal-50/50 ring-4 ring-teal-400/20'
               : 'border-stone-200 bg-white shadow-xs'
@@ -491,7 +538,7 @@ export default function App() {
               </span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="flex flex-wrap gap-3 items-start">
               {standalonePouches.map(pouch => (
                 <PouchCard
                   key={pouch.id}
@@ -506,6 +553,7 @@ export default function App() {
                   onDeletePouch={handleDeletePouch}
                   onUpdatePouchName={(id, name) => handleUpdateBagName(id, name)}
                   onUpdateQuantity={handleUpdateItemQuantity}
+                  onUpdateBagWidth={handleUpdateBagWidth}
                 />
               ))}
             </div>

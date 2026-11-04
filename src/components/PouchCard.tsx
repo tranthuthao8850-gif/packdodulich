@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Edit2, Check, X } from 'lucide-react';
 import { LuggageBag, LuggageItem } from '../types/packing';
 import { BAG_COLORS } from '../utils/bagColors';
@@ -16,6 +16,7 @@ interface PouchCardProps {
   onDeletePouch?: (pouchId: string) => void;
   onUpdatePouchName: (pouchId: string, newName: string) => void;
   onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onUpdateBagWidth?: (bagId: string, width: number) => void;
   onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
@@ -29,11 +30,23 @@ export const PouchCard: React.FC<PouchCardProps> = ({
   onDeleteItem,
   onMovePouch,
   onUpdatePouchName,
-  onUpdateQuantity
+  onUpdateQuantity,
+  onUpdateBagWidth
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(pouch.name);
+
+  // Width resizing for standalone pouches
+  const [width, setWidth] = useState<number>(pouch.customWidth || 320);
+  const [isResizing, setIsResizing] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (pouch.customWidth) {
+      setWidth(pouch.customWidth);
+    }
+  }, [pouch.customWidth]);
 
   const colorStyle = BAG_COLORS[pouch.color] || BAG_COLORS.teal;
 
@@ -86,22 +99,87 @@ export const PouchCard: React.FC<PouchCardProps> = ({
     setIsEditingName(false);
   };
 
+  // Draggable horizontal resize handle for standalone pouch
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+
+    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const initialWidth = cardRef.current?.offsetWidth || width;
+    let latestWidth = initialWidth;
+
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
+      const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const diff = currentX - startX;
+      const newWidth = Math.max(260, Math.min(900, Math.round(initialWidth + diff)));
+      latestWidth = newWidth;
+      setWidth(newWidth);
+    };
+
+    const onEnd = () => {
+      setIsResizing(false);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+
+      if (onUpdateBagWidth) {
+        onUpdateBagWidth(pouch.id, latestWidth);
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchmove', onMove);
+    window.addEventListener('touchend', onEnd);
+  };
+
   return (
     <div
-      draggable
+      ref={cardRef}
+      draggable={!isResizing}
       onDragStart={handlePouchDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`rounded-xl border-2 transition-all select-none relative cursor-grab active:cursor-grabbing ${
+      style={!isNested ? {
+        width: `${width}px`,
+        maxWidth: '100%',
+        flex: `0 1 ${width}px`
+      } : undefined}
+      className={`rounded-xl border-2 transition-all select-none relative cursor-grab active:cursor-grabbing group/pouch ${
+        isResizing ? 'select-none ring-2 ring-amber-400' : ''
+      } ${
         isDragOver
           ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-400/20'
           : isNested
-          ? 'border-stone-300/80 bg-stone-50/90 hover:border-stone-400 shadow-2xs'
+          ? 'border-stone-300/80 bg-stone-50/90 hover:border-stone-400 shadow-2xs w-full'
           : 'border-stone-300 bg-white hover:border-stone-400 shadow-xs'
       }`}
-      title="Kéo cả Pouch này vào Vali khác hoặc kéo vào Thùng rác bên phải để xóa"
+      title="Kéo cả Pouch này vào Vali khác hoặc kéo vào Thùng rác để xóa"
     >
+      {/* Right Drag-to-Resize Handle for Standalone Pouch */}
+      {!isNested && (
+        <div
+          onMouseDown={handleResizeStart}
+          onTouchStart={handleResizeStart}
+          className="absolute top-0 right-0 bottom-0 w-3 cursor-ew-resize hover:bg-amber-400/20 active:bg-amber-500/40 flex items-center justify-center transition-colors z-30 group/handle rounded-r-xl"
+          title="Kéo sang trái hoặc phải để tùy chỉnh độ rộng pouch"
+        >
+          <div className={`w-0.5 rounded-full transition-all ${
+            isResizing 
+              ? 'h-16 bg-amber-500 w-1' 
+              : 'h-6 bg-stone-300 group-hover/handle:bg-amber-500 group-hover/handle:h-10'
+          }`} />
+          {isResizing && (
+            <div className="absolute right-4 top-1 bg-stone-900 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow whitespace-nowrap pointer-events-none">
+              {width}px
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pouch Header */}
       <div className="px-3 py-2 border-b border-stone-200/80 flex items-center justify-between gap-2 bg-stone-100/70 rounded-t-lg">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -125,7 +203,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-xs font-bold text-stone-900 truncate">
+              <span className="text-xs font-bold text-stone-900 break-words leading-tight">
                 👝 {pouch.name}
               </span>
               <button

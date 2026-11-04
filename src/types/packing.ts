@@ -4,6 +4,7 @@ export interface LuggageBag {
   isPouch: boolean; // false = Túi lớn / Vali / Thùng; true = Pouch nhỏ / Túi con
   parentId: string | null; // Nếu là pouch: null = ở ngoài sàn; hoặc ID của túi lớn chứa nó
   color: string;
+  customWidth?: number;
 }
 
 export interface LuggageItem {
