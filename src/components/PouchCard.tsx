@@ -330,7 +330,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
         )}
       </div>
 
-      {/* Merge Modal */}
+      {/* Merge / Move Modal */}
       {onMergePouch && (
         <MergePouchModal
           isOpen={isMergeModalOpen}
@@ -339,6 +339,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
           allBags={allBags}
           sourceItemsCount={items.length}
           onMerge={onMergePouch}
+          onMovePouch={onMovePouch}
         />
       )}
     </div>

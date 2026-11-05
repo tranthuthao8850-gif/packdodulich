@@ -4,7 +4,8 @@ import {
   Check, 
   X, 
   Layers, 
-  PackageOpen
+  PackageOpen,
+  Luggage
 } from 'lucide-react';
 import { LuggageBag, LuggageItem } from '../types/packing';
 import { BAG_COLORS } from '../utils/bagColors';
@@ -177,7 +178,7 @@ export const BagCard: React.FC<BagCardProps> = ({
         maxWidth: '100%',
         flex: `0 1 ${width}px`
       }}
-      className={`rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs relative group/card ${
+      className={`rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs relative group/card overflow-hidden ${
         isResizing ? 'select-none ring-2 ring-amber-400' : ''
       } ${
         isDragOver
@@ -185,6 +186,16 @@ export const BagCard: React.FC<BagCardProps> = ({
           : 'border-stone-200/90 hover:border-stone-300'
       }`}
     >
+      {/* Drop feedback overlay when dragging into this Bag */}
+      {isDragOver && (
+        <div className="absolute inset-0 bg-amber-500/10 backdrop-blur-[1px] border-2 border-amber-500 rounded-2xl z-20 flex flex-col items-center justify-center p-4 text-center pointer-events-none">
+          <div className="bg-white/95 px-4 py-2 rounded-xl shadow-lg border border-amber-300 flex items-center gap-2 text-stone-900 text-xs font-bold animate-bounce">
+            <Luggage className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Thả vào đây: Vali sẽ chứa cả Pouch (giữ nguyên đồ trong pouch)</span>
+          </div>
+        </div>
+      )}
+
       {/* Right Drag-to-Resize Handle */}
       <div
         onMouseDown={handleResizeStart}
@@ -262,18 +273,18 @@ export const BagCard: React.FC<BagCardProps> = ({
       {/* Main Content Area */}
       <div className="p-3 sm:p-4 flex-1 space-y-3.5 sm:space-y-4">
         {/* SUBSECTION 1: Nested Pouches Inside This Bag */}
-        {nestedPouches.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold text-stone-600 uppercase tracking-wider">
-              <span className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-stone-500" />
-                <span>CÁC POUCH NHỎ BÊN TRONG ({nestedPouches.length})</span>
-              </span>
-              <span className="text-[10px] text-stone-400 font-normal normal-case">
-                Kéo pouch ra ngoài nếu muốn đổi túi
-              </span>
-            </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-stone-600 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-stone-500" />
+              <span>CÁC POUCH NHỎ BÊN TRONG ({nestedPouches.length})</span>
+            </span>
+            <span className="text-[10px] text-stone-400 font-normal normal-case">
+              Vali chứa cả pouch · đồ vẫn ở trong pouch
+            </span>
+          </div>
 
+          {nestedPouches.length > 0 ? (
             <div className="space-y-2.5">
               {nestedPouches.map(pouch => (
                 <PouchCard
@@ -296,8 +307,13 @@ export const BagCard: React.FC<BagCardProps> = ({
                 />
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="p-3 rounded-xl border border-dashed border-stone-200 bg-stone-50/50 text-center text-[11px] text-stone-500 flex items-center justify-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-stone-400" />
+              <span>Kéo pouch nhỏ thả vào đây: Vali sẽ chứa cả pouch (giữ nguyên mọi đồ trong pouch)</span>
+            </div>
+          )}
+        </div>
 
         {/* SUBSECTION 2: Direct Items in this Bag */}
         <div className="space-y-2">

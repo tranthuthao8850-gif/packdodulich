@@ -183,7 +183,13 @@ export default function App() {
   // --- Handlers for Pouches & Bags ---
   // When targetParentLargeBagId is null, pouch dragged out becomes a Bag (isPouch = false, parentId = null).
   // When targetParentLargeBagId is set, bag/pouch dragged inside becomes a nested Pouch (isPouch = true, parentId = targetBagId).
+  // CRITICAL: Items inside that pouch are NEVER changed; they stay safely in containerId = containerId!
   const handleMovePouch = (containerId: string, targetParentLargeBagId: string | null) => {
+    const targetPouch = trip.bags.find(b => b.id === containerId);
+    const targetParent = targetParentLargeBagId ? trip.bags.find(b => b.id === targetParentLargeBagId) : null;
+    const pouchName = targetPouch ? targetPouch.name : 'Pouch';
+    const parentName = targetParent ? targetParent.name : 'Vali';
+
     setTrip(prev => ({
       ...prev,
       bags: prev.bags.map(b => {
@@ -195,6 +201,12 @@ export default function App() {
         }
       })
     }));
+
+    if (targetParentLargeBagId) {
+      setToastMessage(`Đã xếp cả "${pouchName}" vào trong "${parentName}" (đồ vẫn ở nguyên trong pouch)!`);
+    } else {
+      setToastMessage(`Đã đưa "${pouchName}" ra ngoài thành Túi riêng!`);
+    }
   };
 
   const handleConvertPouchToBag = (containerId: string) => {
