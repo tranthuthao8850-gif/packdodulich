@@ -12,7 +12,8 @@ import {
   Edit2,
   Check,
   X,
-  Package
+  Package,
+  ListPlus
 } from 'lucide-react';
 import { LuggageBag, LuggageItem, SimpleTripPlan } from './types/packing';
 import { DEFAULT_PLAN, loadTrip, saveTrip } from './utils/storage';
@@ -21,6 +22,7 @@ import { PouchCard } from './components/PouchCard';
 import { ItemCard } from './components/ItemCard';
 import { NewContainerModal } from './components/NewContainerModal';
 import { NewItemModal } from './components/NewItemModal';
+import { ImportItemsModal } from './components/ImportItemsModal';
 import { TrashBinZone } from './components/TrashBinZone';
 
 export default function App() {
@@ -42,6 +44,10 @@ export default function App() {
   // Active drop state for Unassigned shelf or Standalone Pouches shelf
   const [isDropOverUnassigned, setIsDropOverUnassigned] = useState(false);
   const [isDropOverStandalonePouches, setIsDropOverStandalonePouches] = useState(false);
+  const [isDropOverBagsWorkspace, setIsDropOverBagsWorkspace] = useState(false);
+
+  // Bulk import modal
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -111,6 +117,35 @@ export default function App() {
     }));
   };
 
+  const handleUpdateItemName = (itemId: string, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    setTrip(prev => ({
+      ...prev,
+      items: prev.items.map(item =>
+        item.id === itemId ? { ...item, name: trimmed } : item
+      )
+    }));
+  };
+
+  const handleImportItemList = (
+    importedItems: Array<{ name: string; quantity: number }>,
+    targetContainerId: string | null
+  ) => {
+    const newItems: LuggageItem[] = importedItems.map((item, idx) => ({
+      id: `item-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+      name: item.name,
+      quantity: Math.max(1, Math.min(999, Math.floor(item.quantity) || 1)),
+      containerId: targetContainerId,
+      isPacked: false
+    }));
+
+    setTrip(prev => ({
+      ...prev,
+      items: [...newItems, ...prev.items]
+    }));
+  };
+
   const handleAddItem = (name: string, quantity: number, containerId: string | null) => {
     const newItem: LuggageItem = {
       id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -134,13 +169,24 @@ export default function App() {
   };
 
   // --- Handlers for Pouches & Bags ---
-  const handleMovePouch = (pouchId: string, targetParentLargeBagId: string | null) => {
+  // When targetParentLargeBagId is null, pouch dragged out becomes a Bag (isPouch = false, parentId = null).
+  // When targetParentLargeBagId is set, bag/pouch dragged inside becomes a nested Pouch (isPouch = true, parentId = targetBagId).
+  const handleMovePouch = (containerId: string, targetParentLargeBagId: string | null) => {
     setTrip(prev => ({
       ...prev,
-      bags: prev.bags.map(b =>
-        b.id === pouchId ? { ...b, parentId: targetParentLargeBagId } : b
-      )
+      bags: prev.bags.map(b => {
+        if (b.id !== containerId) return b;
+        if (targetParentLargeBagId === null) {
+          return { ...b, parentId: null, isPouch: false };
+        } else {
+          return { ...b, parentId: targetParentLargeBagId, isPouch: true };
+        }
+      })
     }));
+  };
+
+  const handleConvertPouchToBag = (containerId: string) => {
+    handleMovePouch(containerId, null);
   };
 
   const handleAddContainer = (name: string, isPouch: boolean, parentId: string | null, color: string) => {
@@ -297,11 +343,21 @@ export default function App() {
           {/* Primary Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end w-full sm:w-auto">
             <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer shadow-2xs"
+              title="Nhập nhanh danh sách nhiều món đồ cùng lúc (mỗi dòng 1 món)"
+            >
+              <ListPlus className="w-3.5 h-3.5 text-amber-700" />
+              <span className="sm:inline hidden">Import danh sách</span>
+              <span className="sm:hidden">Import</span>
+            </button>
+
+            <button
               onClick={() => {
                 setNewContainerIsPouch(false);
                 setIsNewContainerOpen(true);
               }}
-              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap"
+              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-stone-600" />
               <span className="sm:inline hidden">+ Thêm Túi / Vali</span>
@@ -313,7 +369,7 @@ export default function App() {
                 setNewContainerIsPouch(true);
                 setIsNewContainerOpen(true);
               }}
-              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap"
+              className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer"
             >
               <Layers className="w-3.5 h-3.5 text-teal-700" />
               <span className="sm:inline hidden">+ Thêm Pouch nhỏ</span>
@@ -325,7 +381,7 @@ export default function App() {
                 setNewItemInitialContainerId(null);
                 setIsNewItemOpen(true);
               }}
-              className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 text-xs font-bold text-white bg-stone-900 hover:bg-stone-800 rounded-lg transition-colors shadow-xs flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap"
+              className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 text-xs font-bold text-white bg-stone-900 hover:bg-stone-800 rounded-lg transition-colors shadow-xs flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Thêm Đồ</span>
@@ -361,22 +417,34 @@ export default function App() {
               </span>
             </div>
 
-            {/* Quick inline input to add item directly */}
-            <form onSubmit={handleQuickAddUnassigned} className="flex items-center gap-1.5 w-full sm:w-auto">
-              <input
-                type="text"
-                value={quickItemText}
-                onChange={(e) => setQuickItemText(e.target.value)}
-                placeholder="Nhập nhanh món đồ cần pack..."
-                className="px-3 py-1.5 text-xs border border-stone-300 rounded-lg bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 sm:w-56"
-              />
+            {/* Quick inline input to add item directly or trigger bulk import */}
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <form onSubmit={handleQuickAddUnassigned} className="flex items-center gap-1.5 flex-1 sm:flex-initial">
+                <input
+                  type="text"
+                  value={quickItemText}
+                  onChange={(e) => setQuickItemText(e.target.value)}
+                  placeholder="Nhập nhanh món đồ cần pack..."
+                  className="px-3 py-1.5 text-xs border border-stone-300 rounded-lg bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 sm:w-52"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-xs font-bold text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  + Thêm
+                </button>
+              </form>
+
               <button
-                type="submit"
-                className="px-3.5 py-1.5 text-xs font-bold text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0"
+                type="button"
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-2.5 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                title="Dán danh sách nhiều món đồ (mỗi dòng 1 món)"
               >
-                + Thêm
+                <ListPlus className="w-3.5 h-3.5 text-amber-700" />
+                <span className="hidden sm:inline">Import list</span>
               </button>
-            </form>
+            </div>
           </div>
 
           {/* List of unassigned items */}
@@ -396,6 +464,7 @@ export default function App() {
                     onDeleteItem={handleDeleteItem}
                     onMoveItem={handleMoveItem}
                     onUpdateQuantity={handleUpdateItemQuantity}
+                    onUpdateName={handleUpdateItemName}
                   />
                 ))}
               </div>
@@ -404,13 +473,44 @@ export default function App() {
         </section>
 
         {/* SECTION 1: CÁC TÚI LỚN & VALI CHÍNH */}
-        <section className="space-y-3">
+        <section
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDropOverBagsWorkspace(true);
+          }}
+          onDragLeave={() => setIsDropOverBagsWorkspace(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDropOverBagsWorkspace(false);
+            try {
+              const raw = e.dataTransfer.getData('application/json');
+              if (raw) {
+                const data = JSON.parse(raw);
+                if (data.type === 'pouch' || data.type === 'bag') {
+                  // Dragging a pouch out into the bags area turns it into an independent bag!
+                  handleMovePouch(data.id, null);
+                }
+              }
+            } catch {
+              const id = e.dataTransfer.getData('text/plain');
+              if (id) handleMovePouch(id, null);
+            }
+          }}
+          className={`space-y-3 p-3 sm:p-4 rounded-2xl border-2 transition-all ${
+            isDropOverBagsWorkspace
+              ? 'border-indigo-400 bg-indigo-50/40 ring-4 ring-indigo-300/20'
+              : 'border-transparent'
+          }`}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div className="flex items-center gap-2">
               <Luggage className="w-4 h-4 text-stone-700" />
               <h2 className="text-sm font-bold text-stone-900">
                 Các Túi lớn, Vali & Thùng đựng ({largeBags.length})
               </h2>
+              <span className="text-xs text-stone-400 hidden lg:inline">
+                · Kéo Pouch ra đây để chuyển thành Túi lớn riêng biệt
+              </span>
             </div>
 
             {/* Quick width presets & tip */}
@@ -456,7 +556,7 @@ export default function App() {
                   setNewContainerIsPouch(false);
                   setIsNewContainerOpen(true);
                 }}
-                className="px-3.5 py-1.5 text-xs font-bold text-white bg-stone-900 rounded-lg hover:bg-stone-800"
+                className="px-3.5 py-1.5 text-xs font-bold text-white bg-stone-900 rounded-lg hover:bg-stone-800 cursor-pointer"
               >
                 + Thêm Vali / Túi lớn đầu tiên
               </button>
@@ -485,6 +585,8 @@ export default function App() {
                     onUpdateBagName={handleUpdateBagName}
                     onUpdateQuantity={handleUpdateItemQuantity}
                     onUpdateBagWidth={handleUpdateBagWidth}
+                    onUpdateItemName={handleUpdateItemName}
+                    onConvertToBag={handleConvertPouchToBag}
                   />
                 );
               })}
@@ -522,7 +624,7 @@ export default function App() {
                 setNewContainerIsPouch(true);
                 setIsNewContainerOpen(true);
               }}
-              className="px-3 py-1.5 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
+              className="px-3 py-1.5 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Thêm Pouch</span>
@@ -534,7 +636,7 @@ export default function App() {
               Tất cả pouch nhỏ đã được kéo thả xếp gọn vào trong các vali lớn bên trên.
               <br />
               <span className="text-[11px] text-stone-400">
-                (Muốn lấy pouch nào ra ngoài, bạn có thể kéo thả pouch đó ra khu vực này).
+                (Muốn lấy pouch nào ra ngoài thành túi lớn riêng, bạn có thể kéo thả pouch đó ra khu vực các túi bên trên).
               </span>
             </div>
           ) : (
@@ -554,6 +656,8 @@ export default function App() {
                   onUpdatePouchName={(id, name) => handleUpdateBagName(id, name)}
                   onUpdateQuantity={handleUpdateItemQuantity}
                   onUpdateBagWidth={handleUpdateBagWidth}
+                  onUpdateItemName={handleUpdateItemName}
+                  onConvertToBag={handleConvertPouchToBag}
                 />
               ))}
             </div>
@@ -567,7 +671,7 @@ export default function App() {
           <span>Thu Thảo đi đâu đấy? · Sắp xếp đồ du lịch & lồng ghép pouch trực quan</span>
           <button
             onClick={handleResetToDefault}
-            className="text-stone-400 hover:text-stone-700 flex items-center gap-1 text-[11px]"
+            className="text-stone-400 hover:text-stone-700 flex items-center gap-1 text-[11px] cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Khôi phục mẫu mặc định</span>
@@ -600,6 +704,13 @@ export default function App() {
         allBags={trip.bags}
         initialContainerId={newItemInitialContainerId}
         onAddItem={handleAddItem}
+      />
+
+      <ImportItemsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        allBags={trip.bags}
+        onImportItems={handleImportItemList}
       />
     </div>
   );

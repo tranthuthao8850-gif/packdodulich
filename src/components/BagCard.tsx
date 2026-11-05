@@ -27,6 +27,8 @@ interface BagCardProps {
   onUpdateBagName: (bagId: string, newName: string) => void;
   onUpdateQuantity?: (itemId: string, quantity: number) => void;
   onUpdateBagWidth?: (bagId: string, width: number) => void;
+  onUpdateItemName?: (itemId: string, name: string) => void;
+  onConvertToBag?: (pouchId: string) => void;
   onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
@@ -44,7 +46,9 @@ export const BagCard: React.FC<BagCardProps> = ({
   onUpdatePouchName,
   onUpdateBagName,
   onUpdateQuantity,
-  onUpdateBagWidth
+  onUpdateBagWidth,
+  onUpdateItemName,
+  onConvertToBag
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -91,16 +95,17 @@ export const BagCard: React.FC<BagCardProps> = ({
         if (data.type === 'item') {
           onMoveItem(data.id, bag.id);
           return;
-        } else if (data.type === 'pouch') {
+        } else if (data.type === 'pouch' || data.type === 'bag') {
+          if (data.id === bag.id) return;
           onMovePouch(data.id, bag.id);
           return;
         }
       }
     } catch {
       const id = e.dataTransfer.getData('text/plain');
-      if (id) {
-        const isPouchObj = allBags.some(b => b.id === id && b.isPouch);
-        if (isPouchObj) {
+      if (id && id !== bag.id) {
+        const isContainer = allBags.some(b => b.id === id);
+        if (isContainer) {
           onMovePouch(id, bag.id);
         } else {
           onMoveItem(id, bag.id);
@@ -280,6 +285,8 @@ export const BagCard: React.FC<BagCardProps> = ({
                   onDeletePouch={onDeletePouch}
                   onUpdatePouchName={onUpdatePouchName}
                   onUpdateQuantity={onUpdateQuantity}
+                  onUpdateItemName={onUpdateItemName}
+                  onConvertToBag={onConvertToBag}
                 />
               ))}
             </div>
@@ -305,6 +312,7 @@ export const BagCard: React.FC<BagCardProps> = ({
                 onDeleteItem={onDeleteItem}
                 onMoveItem={onMoveItem}
                 onUpdateQuantity={onUpdateQuantity}
+                onUpdateName={onUpdateItemName}
                 isNestedInsidePouch={false}
               />
             ))}

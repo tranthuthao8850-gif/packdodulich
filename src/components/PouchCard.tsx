@@ -17,6 +17,8 @@ interface PouchCardProps {
   onUpdatePouchName: (pouchId: string, newName: string) => void;
   onUpdateQuantity?: (itemId: string, quantity: number) => void;
   onUpdateBagWidth?: (bagId: string, width: number) => void;
+  onUpdateItemName?: (itemId: string, name: string) => void;
+  onConvertToBag?: (pouchId: string) => void;
   onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
@@ -31,7 +33,9 @@ export const PouchCard: React.FC<PouchCardProps> = ({
   onMovePouch,
   onUpdatePouchName,
   onUpdateQuantity,
-  onUpdateBagWidth
+  onUpdateBagWidth,
+  onUpdateItemName,
+  onConvertToBag
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -221,9 +225,25 @@ export const PouchCard: React.FC<PouchCardProps> = ({
           )}
         </div>
 
-        <span className="text-[10px] font-mono font-bold text-stone-500 bg-white px-1.5 py-0.5 rounded border border-stone-200 shrink-0">
-          {items.length} món
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[10px] font-mono font-bold text-stone-500 bg-white px-1.5 py-0.5 rounded border border-stone-200">
+            {items.length} món
+          </span>
+
+          {isNested && onConvertToBag && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onConvertToBag(pouch.id);
+              }}
+              className="text-[10px] font-semibold text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200 shadow-2xs transition-colors cursor-pointer flex items-center gap-0.5"
+              title="Kéo ra ngoài hoặc bấm để biến thành Túi lớn riêng biệt"
+            >
+              <span>Thành Túi ↗</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Pouch Content (Items inside this pouch) */}
@@ -237,6 +257,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
             onDeleteItem={onDeleteItem}
             onMoveItem={onMoveItem}
             onUpdateQuantity={onUpdateQuantity}
+            onUpdateName={onUpdateItemName}
             isNestedInsidePouch={true}
           />
         ))}
