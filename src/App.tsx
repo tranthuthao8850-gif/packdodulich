@@ -544,11 +544,17 @@ export default function App() {
         {/* SECTION 1: CÁC TÚI LỚN & VALI CHÍNH */}
         <section
           onDragOver={(e) => {
+            if (e.target !== e.currentTarget) return;
             e.preventDefault();
             setIsDropOverBagsWorkspace(true);
           }}
-          onDragLeave={() => setIsDropOverBagsWorkspace(false)}
+          onDragLeave={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsDropOverBagsWorkspace(false);
+            }
+          }}
           onDrop={(e) => {
+            if (e.target !== e.currentTarget) return;
             e.preventDefault();
             setIsDropOverBagsWorkspace(false);
             try {
@@ -556,7 +562,7 @@ export default function App() {
               if (raw) {
                 const data = JSON.parse(raw);
                 if (data.type === 'pouch' || data.type === 'bag') {
-                  // Dragging a pouch out into the bags area turns it into an independent bag!
+                  // Dragging a pouch out into the empty workspace turns it into an independent bag!
                   handleMovePouch(data.id, null);
                 }
               }
