@@ -29,6 +29,8 @@ interface BagCardProps {
   onUpdateBagWidth?: (bagId: string, width: number) => void;
   onUpdateItemName?: (itemId: string, name: string) => void;
   onConvertToBag?: (pouchId: string) => void;
+  onMergePouch?: (sourceContainerId: string, targetContainerId: string) => void;
+  onUnpackIntoParentBag?: (pouchId: string) => void;
   onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
@@ -48,7 +50,9 @@ export const BagCard: React.FC<BagCardProps> = ({
   onUpdateQuantity,
   onUpdateBagWidth,
   onUpdateItemName,
-  onConvertToBag
+  onConvertToBag,
+  onMergePouch,
+  onUnpackIntoParentBag
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -287,6 +291,8 @@ export const BagCard: React.FC<BagCardProps> = ({
                   onUpdateQuantity={onUpdateQuantity}
                   onUpdateItemName={onUpdateItemName}
                   onConvertToBag={onConvertToBag}
+                  onMergePouch={onMergePouch}
+                  onUnpackIntoParentBag={onUnpackIntoParentBag}
                 />
               ))}
             </div>

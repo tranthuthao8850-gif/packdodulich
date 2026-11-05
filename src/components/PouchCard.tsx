@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit2, Check, X } from 'lucide-react';
+import { Edit2, Check, X, Combine } from 'lucide-react';
 import { LuggageBag, LuggageItem } from '../types/packing';
 import { BAG_COLORS } from '../utils/bagColors';
 import { ItemCard } from './ItemCard';
+import { MergePouchModal } from './MergePouchModal';
 
 interface PouchCardProps {
   pouch: LuggageBag;
@@ -19,6 +20,8 @@ interface PouchCardProps {
   onUpdateBagWidth?: (bagId: string, width: number) => void;
   onUpdateItemName?: (itemId: string, name: string) => void;
   onConvertToBag?: (pouchId: string) => void;
+  onMergePouch?: (sourceContainerId: string, targetContainerId: string) => void;
+  onUnpackIntoParentBag?: (pouchId: string) => void;
   onQuickAddItem?: (name: string, quantity: number, containerId: string) => void;
 }
 
@@ -35,11 +38,14 @@ export const PouchCard: React.FC<PouchCardProps> = ({
   onUpdateQuantity,
   onUpdateBagWidth,
   onUpdateItemName,
-  onConvertToBag
+  onConvertToBag,
+  onMergePouch,
+  onUnpackIntoParentBag
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(pouch.name);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
 
   // Width resizing for standalone pouches
   const [width, setWidth] = useState<number>(pouch.customWidth || 320);
@@ -61,7 +67,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
     e.dataTransfer.setData('text/plain', pouch.id);
   };
 
-  // Drag over handlers for dropping ITEMS into this Pouch
+  // Drag over handlers for dropping ITEMS or other POUCHES into this Pouch
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -86,12 +92,24 @@ export const PouchCard: React.FC<PouchCardProps> = ({
         if (data.type === 'item') {
           onMoveItem(data.id, pouch.id);
           return;
+        } else if (data.type === 'pouch' || data.type === 'bag') {
+          // Merge another pouch or bag into this pouch!
+          if (data.id === pouch.id) return;
+          if (onMergePouch) {
+            onMergePouch(data.id, pouch.id);
+          }
+          return;
         }
       }
     } catch {
-      const itemId = e.dataTransfer.getData('text/plain');
-      if (itemId) {
-        onMoveItem(itemId, pouch.id);
+      const id = e.dataTransfer.getData('text/plain');
+      if (id && id !== pouch.id) {
+        const isContainer = allBags.some(b => b.id === id);
+        if (isContainer && onMergePouch) {
+          onMergePouch(id, pouch.id);
+        } else {
+          onMoveItem(id, pouch.id);
+        }
       }
     }
   };
@@ -152,17 +170,27 @@ export const PouchCard: React.FC<PouchCardProps> = ({
         maxWidth: '100%',
         flex: `0 1 ${width}px`
       } : undefined}
-      className={`rounded-xl border-2 transition-all select-none relative cursor-grab active:cursor-grabbing group/pouch ${
+      className={`rounded-xl border-2 transition-all select-none relative cursor-grab active:cursor-grabbing group/pouch overflow-hidden ${
         isResizing ? 'select-none ring-2 ring-amber-400' : ''
       } ${
         isDragOver
-          ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-400/20'
+          ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-400/30'
           : isNested
           ? 'border-stone-300/80 bg-stone-50/90 hover:border-stone-400 shadow-2xs w-full'
           : 'border-stone-300 bg-white hover:border-stone-400 shadow-xs'
       }`}
-      title="Kéo cả Pouch này vào Vali khác hoặc kéo vào Thùng rác để xóa"
+      title="Kéo cả Pouch này vào Vali khác, thả đè lên Pouch khác để gộp, hoặc kéo vào Thùng rác để xóa"
     >
+      {/* Visual Overlay when dragging item or pouch over this pouch */}
+      {isDragOver && (
+        <div className="absolute inset-0 bg-indigo-600/10 backdrop-blur-[1px] border-2 border-indigo-500 rounded-xl z-20 flex flex-col items-center justify-center p-2 text-center pointer-events-none">
+          <div className="bg-white/95 px-3 py-1.5 rounded-lg shadow-md border border-indigo-200 flex items-center gap-1.5 text-indigo-900 text-xs font-bold animate-bounce">
+            <Combine className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Thả vào đây để GỘP vào Pouch này</span>
+          </div>
+        </div>
+      )}
+
       {/* Right Drag-to-Resize Handle for Standalone Pouch */}
       {!isNested && (
         <div
@@ -185,7 +213,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
       )}
 
       {/* Pouch Header */}
-      <div className="px-3 py-2 border-b border-stone-200/80 flex items-center justify-between gap-2 bg-stone-100/70 rounded-t-lg">
+      <div className="px-3 py-2 border-b border-stone-200/80 flex items-center justify-between gap-1.5 sm:gap-2 bg-stone-100/70 rounded-t-lg">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           <span className={`w-2.5 h-2.5 rounded-full ${colorStyle.dot} shrink-0`} />
 
@@ -216,7 +244,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
                   setNameInput(pouch.name);
                   setIsEditingName(true);
                 }}
-                className="p-0.5 text-stone-400 hover:text-stone-700 cursor-pointer"
+                className="p-0.5 text-stone-400 hover:text-stone-700 cursor-pointer shrink-0"
                 title="Đổi tên nhãn pouch"
               >
                 <Edit2 className="w-2.5 h-2.5" />
@@ -225,11 +253,44 @@ export const PouchCard: React.FC<PouchCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Action badges and buttons */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap justify-end">
           <span className="text-[10px] font-mono font-bold text-stone-500 bg-white px-1.5 py-0.5 rounded border border-stone-200">
             {items.length} món
           </span>
 
+          {/* Quick Merge button (1-click for mobile & desktop) */}
+          {onMergePouch && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMergeModalOpen(true);
+              }}
+              className="text-[10px] font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 rounded shadow-2xs transition-colors cursor-pointer flex items-center gap-0.5"
+              title="Gộp pouch này vào một pouch hoặc túi khác"
+            >
+              <Combine className="w-2.5 h-2.5" />
+              <span>Gộp</span>
+            </button>
+          )}
+
+          {/* If nested inside a parent bag: allow unpacking directly into the parent bag */}
+          {isNested && onUnpackIntoParentBag && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUnpackIntoParentBag(pouch.id);
+              }}
+              className="text-[10px] font-semibold text-amber-800 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded shadow-2xs transition-colors cursor-pointer flex items-center gap-0.5"
+              title="Giải nén toàn bộ đồ trong pouch này ra ngoài Túi mẹ"
+            >
+              <span>Vào Túi ⬇</span>
+            </button>
+          )}
+
+          {/* Convert nested pouch to standalone bag */}
           {isNested && onConvertToBag && (
             <button
               type="button"
@@ -268,6 +329,18 @@ export const PouchCard: React.FC<PouchCardProps> = ({
           </div>
         )}
       </div>
+
+      {/* Merge Modal */}
+      {onMergePouch && (
+        <MergePouchModal
+          isOpen={isMergeModalOpen}
+          onClose={() => setIsMergeModalOpen(false)}
+          sourcePouch={pouch}
+          allBags={allBags}
+          sourceItemsCount={items.length}
+          onMerge={onMergePouch}
+        />
+      )}
     </div>
   );
 };

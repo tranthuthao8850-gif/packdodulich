@@ -13,7 +13,8 @@ import {
   Check,
   X,
   Package,
-  ListPlus
+  ListPlus,
+  Combine
 } from 'lucide-react';
 import { LuggageBag, LuggageItem, SimpleTripPlan } from './types/packing';
 import { DEFAULT_PLAN, loadTrip, saveTrip } from './utils/storage';
@@ -48,6 +49,17 @@ export default function App() {
 
   // Bulk import modal
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // Feedback Toast (e.g. when merging pouches)
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -187,6 +199,51 @@ export default function App() {
 
   const handleConvertPouchToBag = (containerId: string) => {
     handleMovePouch(containerId, null);
+  };
+
+  // Merge one container (source) into another (target).
+  // All items in source move to target, and source is removed.
+  const handleMergeContainers = (sourceContainerId: string, targetContainerId: string) => {
+    if (sourceContainerId === targetContainerId) return;
+
+    const sourceBag = trip.bags.find(b => b.id === sourceContainerId);
+    const targetBag = trip.bags.find(b => b.id === targetContainerId);
+    if (!sourceBag || !targetBag) return;
+
+    const sourceItems = trip.items.filter(i => i.containerId === sourceContainerId);
+    const count = sourceItems.length;
+
+    setTrip(prev => {
+      // 1. Reassign all items from source to target
+      const updatedItems = prev.items.map(item =>
+        item.containerId === sourceContainerId
+          ? { ...item, containerId: targetContainerId }
+          : item
+      );
+
+      // 2. If source had any nested pouches, reassign them to target
+      const updatedBags = prev.bags
+        .filter(b => b.id !== sourceContainerId)
+        .map(b => b.parentId === sourceContainerId 
+          ? { ...b, parentId: targetBag.isPouch ? targetBag.parentId : targetBag.id } 
+          : b
+        );
+
+      return {
+        ...prev,
+        bags: updatedBags,
+        items: updatedItems
+      };
+    });
+
+    setToastMessage(`Đã gộp "${sourceBag.name}" vào "${targetBag.name}" (${count} món đồ)!`);
+  };
+
+  // Unpack a nested pouch directly into its parent bag
+  const handleUnpackIntoParentBag = (pouchId: string) => {
+    const pouch = trip.bags.find(b => b.id === pouchId);
+    if (!pouch || !pouch.parentId) return;
+    handleMergeContainers(pouchId, pouch.parentId);
   };
 
   const handleAddContainer = (name: string, isPouch: boolean, parentId: string | null, color: string) => {
@@ -587,6 +644,8 @@ export default function App() {
                     onUpdateBagWidth={handleUpdateBagWidth}
                     onUpdateItemName={handleUpdateItemName}
                     onConvertToBag={handleConvertPouchToBag}
+                    onMergePouch={handleMergeContainers}
+                    onUnpackIntoParentBag={handleUnpackIntoParentBag}
                   />
                 );
               })}
@@ -658,6 +717,7 @@ export default function App() {
                   onUpdateBagWidth={handleUpdateBagWidth}
                   onUpdateItemName={handleUpdateItemName}
                   onConvertToBag={handleConvertPouchToBag}
+                  onMergePouch={handleMergeContainers}
                 />
               ))}
             </div>
@@ -688,6 +748,20 @@ export default function App() {
         bags={trip.bags}
         onRestoreItem={handleRestoreItem}
       />
+
+      {/* TOAST NOTIFICATION FOR MERGE / ACTIONS */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold backdrop-blur-xs border border-stone-700 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <Combine className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-stone-400 hover:text-white cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* MODALS */}
       <NewContainerModal
