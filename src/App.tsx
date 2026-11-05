@@ -25,9 +25,13 @@ import { NewContainerModal } from './components/NewContainerModal';
 import { NewItemModal } from './components/NewItemModal';
 import { ImportItemsModal } from './components/ImportItemsModal';
 import { TrashBinZone } from './components/TrashBinZone';
+import { useAutoScrollOnDrag } from './utils/useAutoScrollOnDrag';
 
 export default function App() {
   const [trip, setTrip] = useState<SimpleTripPlan>(loadTrip);
+
+  // Auto-scroll screen when dragging items/pouches near viewport edges
+  useAutoScrollOnDrag();
 
   // Modals
   const [isNewContainerOpen, setIsNewContainerOpen] = useState(false);
@@ -46,6 +50,7 @@ export default function App() {
   const [isDropOverUnassigned, setIsDropOverUnassigned] = useState(false);
   const [isDropOverStandalonePouches, setIsDropOverStandalonePouches] = useState(false);
   const [isDropOverBagsWorkspace, setIsDropOverBagsWorkspace] = useState(false);
+  const [isDropOverExtractZone, setIsDropOverExtractZone] = useState(false);
 
   // Bulk import modal
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -181,12 +186,49 @@ export default function App() {
   };
 
   // --- Handlers for Pouches & Bags ---
-  // When targetParentLargeBagId is null, pouch dragged out becomes a Bag (isPouch = false, parentId = null).
-  // When targetParentLargeBagId is set, bag/pouch dragged inside becomes a nested Pouch (isPouch = true, parentId = targetBagId).
+  // Convert a pouch (nested or standalone) to an independent large Bag (parentId: null, isPouch: false).
   // CRITICAL: Items inside that pouch are NEVER changed; they stay safely in containerId = containerId!
-  const handleMovePouch = (containerId: string, targetParentLargeBagId: string | null) => {
+  const handleConvertPouchToBag = (containerId: string) => {
     const targetPouch = trip.bags.find(b => b.id === containerId);
-    const targetParent = targetParentLargeBagId ? trip.bags.find(b => b.id === targetParentLargeBagId) : null;
+    const pouchName = targetPouch ? targetPouch.name : 'Pouch';
+
+    setTrip(prev => ({
+      ...prev,
+      bags: prev.bags.map(b => {
+        if (b.id !== containerId) return b;
+        return { ...b, parentId: null, isPouch: false };
+      })
+    }));
+
+    setToastMessage(`Đã tách "${pouchName}" ra ngoài thành 1 Túi lớn riêng biệt (đồ vẫn giữ nguyên 100%)!`);
+  };
+
+  // Move a pouch to the standalone shelf outside of all large bags (parentId: null, isPouch: true)
+  const handleMoveToStandalonePouch = (containerId: string) => {
+    const targetPouch = trip.bags.find(b => b.id === containerId);
+    const pouchName = targetPouch ? targetPouch.name : 'Pouch';
+
+    setTrip(prev => ({
+      ...prev,
+      bags: prev.bags.map(b => {
+        if (b.id !== containerId) return b;
+        return { ...b, parentId: null, isPouch: true };
+      })
+    }));
+
+    setToastMessage(`Đã chuyển "${pouchName}" ra kệ Pouch bên ngoài!`);
+  };
+
+  // Move a pouch into a parent bag (isPouch = true, parentId = targetBagId)
+  // Or if targetParentLargeBagId is null, convert it to an independent Bag.
+  const handleMovePouch = (containerId: string, targetParentLargeBagId: string | null) => {
+    if (targetParentLargeBagId === null) {
+      handleConvertPouchToBag(containerId);
+      return;
+    }
+
+    const targetPouch = trip.bags.find(b => b.id === containerId);
+    const targetParent = trip.bags.find(b => b.id === targetParentLargeBagId);
     const pouchName = targetPouch ? targetPouch.name : 'Pouch';
     const parentName = targetParent ? targetParent.name : 'Vali';
 
@@ -194,23 +236,11 @@ export default function App() {
       ...prev,
       bags: prev.bags.map(b => {
         if (b.id !== containerId) return b;
-        if (targetParentLargeBagId === null) {
-          return { ...b, parentId: null, isPouch: false };
-        } else {
-          return { ...b, parentId: targetParentLargeBagId, isPouch: true };
-        }
+        return { ...b, parentId: targetParentLargeBagId, isPouch: true };
       })
     }));
 
-    if (targetParentLargeBagId) {
-      setToastMessage(`Đã xếp cả "${pouchName}" vào trong "${parentName}" (đồ vẫn ở nguyên trong pouch)!`);
-    } else {
-      setToastMessage(`Đã đưa "${pouchName}" ra ngoài thành Túi riêng!`);
-    }
-  };
-
-  const handleConvertPouchToBag = (containerId: string) => {
-    handleMovePouch(containerId, null);
+    setToastMessage(`Đã xếp cả "${pouchName}" vào trong "${parentName}" (đồ vẫn ở nguyên trong pouch)!`);
   };
 
   // Merge one container (source) into another (target).
@@ -344,13 +374,13 @@ export default function App() {
       const raw = e.dataTransfer.getData('application/json');
       if (raw) {
         const data = JSON.parse(raw);
-        if (data.type === 'pouch') {
-          handleMovePouch(data.id, null); // remove pouch from bag to standalone
+        if (data.type === 'pouch' || data.type === 'bag') {
+          handleMoveToStandalonePouch(data.id);
         }
       }
     } catch {
       const pouchId = e.dataTransfer.getData('text/plain');
-      if (pouchId) handleMovePouch(pouchId, null);
+      if (pouchId) handleMoveToStandalonePouch(pouchId);
     }
   };
 
@@ -544,31 +574,36 @@ export default function App() {
         {/* SECTION 1: CÁC TÚI LỚN & VALI CHÍNH */}
         <section
           onDragOver={(e) => {
-            if (e.target !== e.currentTarget) return;
             e.preventDefault();
             setIsDropOverBagsWorkspace(true);
           }}
           onDragLeave={(e) => {
-            if (e.target === e.currentTarget) {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
               setIsDropOverBagsWorkspace(false);
             }
           }}
           onDrop={(e) => {
-            if (e.target !== e.currentTarget) return;
             e.preventDefault();
             setIsDropOverBagsWorkspace(false);
+            setIsDropOverExtractZone(false);
             try {
               const raw = e.dataTransfer.getData('application/json');
               if (raw) {
                 const data = JSON.parse(raw);
                 if (data.type === 'pouch' || data.type === 'bag') {
                   // Dragging a pouch out into the empty workspace turns it into an independent bag!
-                  handleMovePouch(data.id, null);
+                  handleConvertPouchToBag(data.id);
+                  return;
                 }
               }
             } catch {
               const id = e.dataTransfer.getData('text/plain');
-              if (id) handleMovePouch(id, null);
+              if (id) {
+                const isBagOrPouch = trip.bags.some(b => b.id === id);
+                if (isBagOrPouch) {
+                  handleConvertPouchToBag(id);
+                }
+              }
             }
           }}
           className={`space-y-3 p-3 sm:p-4 rounded-2xl border-2 transition-all ${
@@ -667,6 +702,61 @@ export default function App() {
                   />
                 );
               })}
+
+              {/* Dedicated Visual Drop Target to turn Pouch into Bag */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDropOverExtractZone(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDropOverExtractZone(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDropOverExtractZone(false);
+                  try {
+                    const raw = e.dataTransfer.getData('application/json');
+                    if (raw) {
+                      const data = JSON.parse(raw);
+                      if (data.type === 'pouch' || data.type === 'bag') {
+                        handleConvertPouchToBag(data.id);
+                        return;
+                      }
+                    }
+                  } catch {
+                    const id = e.dataTransfer.getData('text/plain');
+                    if (id) handleConvertPouchToBag(id);
+                  }
+                }}
+                className={`min-h-[220px] w-64 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-5 text-center transition-all cursor-pointer ${
+                  isDropOverExtractZone
+                    ? 'border-indigo-600 bg-indigo-100/90 text-indigo-900 scale-102 ring-4 ring-indigo-300/50 shadow-md'
+                    : 'border-stone-300 bg-stone-50/70 hover:border-indigo-400 hover:bg-indigo-50/30 text-stone-600'
+                }`}
+                onClick={() => {
+                  setNewContainerIsPouch(false);
+                  setIsNewContainerOpen(true);
+                }}
+                title="Kéo thả Pouch vào đây để biến thành Túi lớn, hoặc bấm để tạo thêm Túi/Vali mới"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-stone-200 flex items-center justify-center mb-2.5 text-indigo-600">
+                  <Luggage className="w-5 h-5" />
+                </div>
+                <div className="text-xs font-bold text-stone-800 mb-1">
+                  Kéo Pouch thả vào đây
+                </div>
+                <p className="text-[11px] text-stone-500 leading-relaxed mb-3">
+                  Pouch sẽ tự động tách ra thành <strong className="text-indigo-600 font-semibold">1 Túi lớn riêng biệt</strong> (toàn bộ đồ bên trong vẫn giữ nguyên 100%)
+                </p>
+                <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200/60">
+                  + Hoặc bấm tạo Vali mới
+                </span>
+              </div>
             </div>
           )}
         </section>

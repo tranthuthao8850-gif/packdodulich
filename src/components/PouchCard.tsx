@@ -290,16 +290,16 @@ export const PouchCard: React.FC<PouchCardProps> = ({
             </button>
           )}
 
-          {/* Convert nested pouch to standalone bag */}
-          {isNested && onConvertToBag && (
+          {/* Convert pouch to standalone bag */}
+          {onConvertToBag && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onConvertToBag(pouch.id);
               }}
-              className="text-[10px] font-semibold text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200 shadow-2xs transition-colors cursor-pointer flex items-center gap-0.5"
-              title="Kéo ra ngoài hoặc bấm để biến thành Túi lớn riêng biệt"
+              className="text-[10px] font-semibold text-indigo-700 hover:text-indigo-950 bg-white hover:bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 shadow-2xs transition-colors cursor-pointer flex items-center gap-0.5"
+              title="Kéo ra ngoài hoặc bấm để biến pouch thành Túi lớn riêng biệt (đồ giữ nguyên 100%)"
             >
               <span>Thành Túi ↗</span>
             </button>
