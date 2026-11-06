@@ -308,7 +308,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
       </div>
 
       {/* Pouch Content (Items inside this pouch) */}
-      <div className="p-2 space-y-1.5 min-h-[44px]">
+      <div className="p-2.5 flex flex-wrap gap-2 items-center min-h-[44px]">
         {items.map(item => (
           <ItemCard
             key={item.id}
@@ -324,7 +324,7 @@ export const PouchCard: React.FC<PouchCardProps> = ({
         ))}
 
         {items.length === 0 && (
-          <div className="py-2.5 text-center text-[11px] text-stone-400 italic">
+          <div className="w-full py-2.5 text-center text-[11px] text-stone-400 italic">
             Kéo thả đồ đạc vào pouch này
           </div>
         )}

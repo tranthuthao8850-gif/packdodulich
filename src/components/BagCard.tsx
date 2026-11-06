@@ -328,7 +328,7 @@ export const BagCard: React.FC<BagCardProps> = ({
             </span>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex flex-wrap gap-2 items-center min-h-[38px]">
             {directItems.map(item => (
               <ItemCard
                 key={item.id}
@@ -344,7 +344,7 @@ export const BagCard: React.FC<BagCardProps> = ({
             ))}
 
             {directItems.length === 0 && nestedPouches.length === 0 && (
-              <div className="py-8 text-center text-xs text-stone-400 border border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center">
+              <div className="w-full py-8 text-center text-xs text-stone-400 border border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center">
                 <PackageOpen className="w-6 h-6 text-stone-300 mb-1" />
                 <span>Chưa có đồ nào trong túi này.</span>
                 <span className="text-[11px] text-stone-400">Kéo thả đồ vật hoặc pouch nhỏ vào đây!</span>

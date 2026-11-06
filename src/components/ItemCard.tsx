@@ -69,17 +69,17 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     <div
       draggable={!isBusyEditing}
       onDragStart={handleDragStart}
-      className={`group px-2.5 sm:px-3 py-2 rounded-xl border flex items-center justify-between gap-2 transition-all cursor-grab active:cursor-grabbing relative select-none hover:shadow-xs hover:-translate-y-0.5 ${
+      className={`group inline-flex w-fit max-w-full items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing relative select-none hover:shadow-xs hover:-translate-y-0.5 shrink-0 ${
         item.isPacked
-          ? 'bg-stone-50 border-stone-200 text-stone-400 opacity-70'
+          ? 'bg-stone-100/80 border-stone-200 text-stone-400 opacity-70'
           : isNestedInsidePouch
-          ? 'bg-white border-stone-200/90 hover:border-stone-300'
-          : 'bg-white border-stone-200 hover:border-stone-300'
+          ? 'bg-white border-stone-200 hover:border-stone-400 shadow-2xs'
+          : 'bg-white border-stone-200 hover:border-stone-400 shadow-2xs'
       }`}
       title={isBusyEditing ? undefined : "Kéo thả để di chuyển hoặc kéo vào Thùng rác bên phải để xóa"}
     >
       {/* Checkbox + Item Name */}
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-center gap-1.5 min-w-0">
         <button
           type="button"
           onClick={(e) => {
@@ -97,7 +97,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         </button>
 
         {isEditingName ? (
-          <div className="flex-1 flex items-center gap-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 min-w-0" onClick={(e) => e.stopPropagation()}>
             <input
               type="text"
               value={nameInput}
@@ -108,7 +108,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
               }}
               onBlur={handleSaveName}
               autoFocus
-              className="w-full px-2 py-0.5 text-xs font-semibold text-stone-900 bg-white border border-amber-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+              className="min-w-[120px] max-w-[220px] px-2 py-0.5 text-xs font-semibold text-stone-900 bg-white border border-amber-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
             />
             <button
               type="button"
@@ -128,14 +128,14 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 min-w-0 flex-1 group/name">
+          <div className="flex items-center gap-1 min-w-0 group/name">
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 setNameInput(item.name);
                 setIsEditingName(true);
               }}
-              className={`text-xs font-semibold break-words leading-snug flex-1 cursor-text hover:text-amber-700 transition-colors ${
+              className={`text-xs font-semibold whitespace-normal break-words leading-tight cursor-text hover:text-amber-700 transition-colors ${
                 item.isPacked ? 'line-through text-stone-400' : 'text-stone-800'
               }`}
               title="Bấm vào để chỉnh sửa tên món đồ"
@@ -189,7 +189,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             setQtyInput(item.quantity.toString());
             setIsEditingQty(true);
           }}
-          className="text-[11px] font-mono font-bold text-stone-600 bg-stone-100 hover:bg-amber-100 hover:text-amber-900 hover:border-amber-300 px-2 py-0.5 rounded-md border border-stone-200/90 transition-all shrink-0 cursor-pointer flex items-center gap-0.5"
+          className="text-[11px] font-mono font-bold text-stone-600 bg-stone-100 hover:bg-amber-100 hover:text-amber-900 hover:border-amber-300 px-1.5 py-0.5 rounded-md border border-stone-200/90 transition-all shrink-0 cursor-pointer flex items-center gap-0.5"
           title="Bấm vào để tự điền số lượng mới"
         >
           <span>x{item.quantity}</span>

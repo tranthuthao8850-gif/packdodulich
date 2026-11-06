@@ -553,7 +553,7 @@ export default function App() {
                 Không còn đồ nào trong hàng đợi. Tất cả đã được xếp vào các túi hoặc pouch!
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 {unassignedItems.map(item => (
                   <ItemCard
                     key={item.id}
