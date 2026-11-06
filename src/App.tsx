@@ -511,9 +511,6 @@ export default function App() {
               <h2 className="text-sm font-bold text-stone-900">
                 Đồ chưa xếp vào túi ({unassignedItems.length} món)
               </h2>
-              <span className="text-xs text-stone-500 hidden md:inline">
-                · Kéo thả các món bên dưới vào bất kỳ Vali lớn hoặc Pouch nhỏ nào
-              </span>
             </div>
 
             {/* Quick inline input to add item directly or trigger bulk import */}
@@ -618,16 +615,10 @@ export default function App() {
               <h2 className="text-sm font-bold text-stone-900">
                 Các Túi lớn, Vali & Thùng đựng ({largeBags.length})
               </h2>
-              <span className="text-xs text-stone-400 hidden lg:inline">
-                · Kéo Pouch ra đây để chuyển thành Túi lớn riêng biệt
-              </span>
             </div>
 
-            {/* Quick width presets & tip */}
+            {/* Quick width presets */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-[11px] text-stone-400 hidden sm:inline">
-                ↔ Kéo mép phải khung hoặc chọn cỡ:
-              </span>
               <div className="flex items-center bg-white border border-stone-200 rounded-lg p-0.5 shadow-2xs">
                 <button
                   type="button"
@@ -781,9 +772,6 @@ export default function App() {
                 <Layers className="w-4 h-4 text-teal-700" />
                 <span>Pouch nhỏ để ngoài ({standalonePouches.length})</span>
               </h2>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Các pouch này đang để bên ngoài. Bạn có thể <strong>kéo thả cả pouch này vào một Vali lớn bên trên</strong> để xếp đồ gọn gàng!
-              </p>
             </div>
 
             <button

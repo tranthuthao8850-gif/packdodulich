@@ -267,90 +267,68 @@ export const BagCard: React.FC<BagCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 pr-2">
-          <span className="text-[11px] sm:text-xs font-mono font-bold text-stone-600 bg-white px-2 sm:px-2.5 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
-            {totalItemsInBag} món {nestedPouches.length > 0 ? `· ${nestedPouches.length} pouch` : ''}
+        <div className="flex items-center gap-1.5 shrink-0 pr-1">
+          {nestedPouches.length > 0 && (
+            <span className="text-[11px] font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/90 shadow-2xs">
+              {nestedPouches.length} pouch
+            </span>
+          )}
+          <span className="text-[11px] font-mono font-bold text-stone-700 bg-white px-2 py-0.5 rounded-full border border-stone-200/80 shadow-2xs">
+            {directItems.length} đồ
           </span>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="p-3 sm:p-4 flex-1 space-y-3.5 sm:space-y-4">
-        {/* SUBSECTION 1: Nested Pouches Inside This Bag */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-bold text-stone-600 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-stone-500" />
-              <span>CÁC POUCH NHỎ BÊN TRONG ({nestedPouches.length})</span>
-            </span>
-            <span className="text-[10px] text-stone-400 font-normal normal-case">
-              Vali chứa cả pouch · đồ vẫn ở trong pouch
-            </span>
-          </div>
-
-          {nestedPouches.length > 0 ? (
-            <div className="space-y-2.5">
-              {nestedPouches.map(pouch => (
-                <PouchCard
-                  key={pouch.id}
-                  pouch={pouch}
-                  items={allItems.filter(i => i.containerId === pouch.id)}
-                  allBags={allBags}
-                  isNested={true}
-                  onMoveItem={onMoveItem}
-                  onTogglePacked={onTogglePacked}
-                  onDeleteItem={onDeleteItem}
-                  onMovePouch={onMovePouch}
-                  onDeletePouch={onDeletePouch}
-                  onUpdatePouchName={onUpdatePouchName}
-                  onUpdateQuantity={onUpdateQuantity}
-                  onUpdateItemName={onUpdateItemName}
-                  onConvertToBag={onConvertToBag}
-                  onMergePouch={onMergePouch}
-                  onUnpackIntoParentBag={onUnpackIntoParentBag}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="p-3 rounded-xl border border-dashed border-stone-200 bg-stone-50/50 text-center text-[11px] text-stone-500 flex items-center justify-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-stone-400" />
-              <span>Kéo pouch nhỏ thả vào đây: Vali sẽ chứa cả pouch (giữ nguyên mọi đồ trong pouch)</span>
-            </div>
-          )}
-        </div>
-
-        {/* SUBSECTION 2: Direct Items in this Bag */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-bold text-stone-600 uppercase tracking-wider">
-            <span>ĐỒ ĐẠC XẾP TRỰC TIẾP ({directItems.length})</span>
-            <span className="text-[10px] text-stone-400 font-normal normal-case">
-              Kéo thả vào pouch hoặc túi khác
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2 items-center min-h-[38px]">
-            {directItems.map(item => (
-              <ItemCard
-                key={item.id}
-                item={item}
+      <div className="p-3 sm:p-4 flex-1 space-y-3">
+        {/* Nested Pouches Inside This Bag (if any) */}
+        {nestedPouches.length > 0 && (
+          <div className="space-y-2">
+            {nestedPouches.map(pouch => (
+              <PouchCard
+                key={pouch.id}
+                pouch={pouch}
+                items={allItems.filter(i => i.containerId === pouch.id)}
                 allBags={allBags}
+                isNested={true}
+                onMoveItem={onMoveItem}
                 onTogglePacked={onTogglePacked}
                 onDeleteItem={onDeleteItem}
-                onMoveItem={onMoveItem}
+                onMovePouch={onMovePouch}
+                onDeletePouch={onDeletePouch}
+                onUpdatePouchName={onUpdatePouchName}
                 onUpdateQuantity={onUpdateQuantity}
-                onUpdateName={onUpdateItemName}
-                isNestedInsidePouch={false}
+                onUpdateItemName={onUpdateItemName}
+                onConvertToBag={onConvertToBag}
+                onMergePouch={onMergePouch}
+                onUnpackIntoParentBag={onUnpackIntoParentBag}
               />
             ))}
-
-            {directItems.length === 0 && nestedPouches.length === 0 && (
-              <div className="w-full py-8 text-center text-xs text-stone-400 border border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center">
-                <PackageOpen className="w-6 h-6 text-stone-300 mb-1" />
-                <span>Chưa có đồ nào trong túi này.</span>
-                <span className="text-[11px] text-stone-400">Kéo thả đồ vật hoặc pouch nhỏ vào đây!</span>
-              </div>
-            )}
           </div>
+        )}
+
+        {/* Direct Items in this Bag */}
+        <div className="flex flex-wrap gap-2 items-center min-h-[38px]">
+          {directItems.map(item => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              allBags={allBags}
+              onTogglePacked={onTogglePacked}
+              onDeleteItem={onDeleteItem}
+              onMoveItem={onMoveItem}
+              onUpdateQuantity={onUpdateQuantity}
+              onUpdateName={onUpdateItemName}
+              isNestedInsidePouch={false}
+            />
+          ))}
+
+          {directItems.length === 0 && nestedPouches.length === 0 && (
+            <div className="w-full py-8 text-center text-xs text-stone-400 border border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center">
+              <PackageOpen className="w-6 h-6 text-stone-300 mb-1" />
+              <span>Chưa có đồ nào trong túi này.</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
