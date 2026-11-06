@@ -184,49 +184,48 @@ export const TrashBinZone: React.FC<TrashBinZoneProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         aria-label="Thùng rác xóa đồ"
-        className={`hidden lg:flex fixed right-3 xl:right-4 top-24 z-40 transition-all duration-200 select-none ${
+        className={`hidden lg:flex fixed right-[10mm] top-20 z-40 transition-all duration-200 select-none ${
           isDragOver
-            ? 'scale-105'
+            ? 'scale-115'
             : isWindowDragging
-            ? 'scale-102 animate-pulse'
-            : ''
+            ? 'scale-110 animate-pulse'
+            : 'opacity-85 hover:opacity-100 hover:scale-105'
         }`}
       >
-        <div
-          className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all shadow-lg backdrop-blur-md cursor-pointer w-28 xl:w-32 ${
-            isDragOver
-              ? 'bg-rose-500 border-rose-600 text-white ring-4 ring-rose-400/40 shadow-rose-500/25'
-              : isWindowDragging
-              ? 'bg-rose-50/95 border-rose-400 text-rose-700 ring-4 ring-rose-300/30 shadow-md'
-              : 'bg-white/95 border-stone-300 hover:border-rose-400 text-stone-600 hover:text-rose-600 shadow-md'
-          }`}
-          title="Kéo đồ đạc hoặc túi vào đây để xoá luôn"
-        >
-          {/* Animated Trash Icon */}
+        {isWindowDragging ? (
           <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center mb-1 transition-all ${
+            className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all shadow-xl backdrop-blur-md cursor-pointer min-w-[120px] ${
               isDragOver
-                ? 'bg-white text-rose-600 scale-110 shadow-md rotate-6'
-                : isWindowDragging
-                ? 'bg-rose-100 text-rose-600 scale-105'
-                : 'bg-stone-100 text-stone-500'
+                ? 'bg-rose-500 border-rose-600 text-white ring-4 ring-rose-400/40 shadow-rose-500/30'
+                : 'bg-rose-50/95 border-rose-400 text-rose-700 ring-4 ring-rose-300/30 shadow-md'
             }`}
+            title="Kéo đồ đạc hoặc túi vào đây để xoá luôn"
           >
-            <Trash2 className="w-5 h-5 transition-transform" />
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-all ${
+                isDragOver ? 'bg-white text-rose-600 scale-115 shadow-md rotate-6' : 'bg-rose-100 text-rose-600'
+              }`}
+            >
+              <Trash2 className="w-5 h-5 transition-transform" />
+            </div>
+
+            <span className={`text-xs font-bold tracking-tight text-center ${isDragOver ? 'text-white' : 'text-rose-700'}`}>
+              {isDragOver ? 'Thả để xoá!' : 'Thùng rác'}
+            </span>
+
+            <span className={`text-[9px] text-center mt-0.5 leading-tight ${isDragOver ? 'text-rose-100' : 'text-rose-600 font-medium'}`}>
+              {isDragOver ? 'Thả tay để xoá' : 'Thả vào để xoá'}
+            </span>
           </div>
-
-          <span className={`text-xs font-bold tracking-tight text-center ${
-            isDragOver ? 'text-white' : isWindowDragging ? 'text-rose-700' : 'text-stone-800'
-          }`}>
-            {isDragOver ? 'Thả để xoá!' : 'Thùng rác'}
-          </span>
-
-          <span className={`text-[9px] text-center mt-0.5 leading-tight ${
-            isDragOver ? 'text-rose-100' : isWindowDragging ? 'text-rose-600 font-medium' : 'text-stone-400'
-          }`}>
-            {isDragOver ? 'Thả tay để xoá' : 'Kéo vào đây để xoá'}
-          </span>
-        </div>
+        ) : (
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-200/90 bg-white/95 text-stone-600 hover:border-rose-400 hover:text-rose-600 shadow-md transition-all cursor-pointer backdrop-blur-xs"
+            title="Thùng rác: Khi kéo đồ hoặc túi sẽ tự động mở rộng để bạn thả vào xóa"
+          >
+            <Trash2 className="w-4 h-4 text-rose-500" />
+            <span className="text-xs font-semibold">Thùng rác</span>
+          </div>
+        )}
       </aside>
 
       {/* 2. MOBILE & TABLET TRASH BIN (Visible only below lg screens) */}
