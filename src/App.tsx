@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Luggage, 
   Plus, 
@@ -14,8 +14,15 @@ import {
   X,
   Package,
   ListPlus,
-  Combine
+  Combine,
+  Cloud,
+  LogOut
 } from 'lucide-react';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from './firebase';
+import { useAuth } from './context/AuthContext';
+import { AuthModal } from './components/AuthModal';
+import { handleFirestoreError, OperationType } from './utils/firestoreErrors';
 import { LuggageBag, LuggageItem, SimpleTripPlan } from './types/packing';
 import { DEFAULT_PLAN, loadTrip, saveTrip } from './utils/storage';
 import { BagCard } from './components/BagCard';
@@ -28,6 +35,11 @@ import { TrashBinZone } from './components/TrashBinZone';
 import { useAutoScrollOnDrag } from './utils/useAutoScrollOnDrag';
 
 export default function App() {
+  const { user, logout } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const isUpdatingFromCloudRef = useRef(false);
+
   const [trip, setTrip] = useState<SimpleTripPlan>(loadTrip);
 
   // Auto-scroll screen when dragging items/pouches near viewport edges
@@ -38,6 +50,7 @@ export default function App() {
   const [newContainerIsPouch, setNewContainerIsPouch] = useState(false);
   const [isNewItemOpen, setIsNewItemOpen] = useState(false);
   const [newItemInitialContainerId, setNewItemInitialContainerId] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Quick inline add item to unassigned shelf
   const [quickItemText, setQuickItemText] = useState('');
@@ -52,10 +65,7 @@ export default function App() {
   const [isDropOverBagsWorkspace, setIsDropOverBagsWorkspace] = useState(false);
   const [isDropOverExtractZone, setIsDropOverExtractZone] = useState(false);
 
-  // Bulk import modal
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
-  // Feedback Toast (e.g. when merging pouches)
+  // Feedback Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Auto-dismiss toast
@@ -66,10 +76,87 @@ export default function App() {
     }
   }, [toastMessage]);
 
-  // Auto-save to localStorage
+  // 1. Realtime Firestore listener when authenticated
+  useEffect(() => {
+    if (!user) return;
+
+    setIsSyncing(true);
+    const planDocPath = `userPlans/${user.uid}`;
+    const planDocRef = doc(db, 'userPlans', user.uid);
+
+    const unsubscribe = onSnapshot(
+      planDocRef,
+      (docSnap) => {
+        setIsSyncing(false);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.title && Array.isArray(data.bags) && Array.isArray(data.items)) {
+            isUpdatingFromCloudRef.current = true;
+            setTrip({
+              title: data.title,
+              bags: data.bags,
+              items: data.items
+            });
+            saveTrip({
+              title: data.title,
+              bags: data.bags,
+              items: data.items
+            });
+            setTimeout(() => {
+              isUpdatingFromCloudRef.current = false;
+            }, 300);
+          }
+        } else {
+          // New account with no cloud plan yet: migrate current local trip to Firestore
+          setDoc(planDocRef, {
+            userId: user.uid,
+            title: trip.title,
+            bags: trip.bags,
+            items: trip.items,
+            updatedAt: new Date().toISOString()
+          }).catch((err) => {
+            handleFirestoreError(err, OperationType.WRITE, planDocPath);
+          });
+        }
+      },
+      (error) => {
+        setIsSyncing(false);
+        handleFirestoreError(error, OperationType.GET, planDocPath);
+      }
+    );
+
+    setToastMessage(`Đã kết nối: ${user.email || user.displayName || 'Tài khoản'}. Dữ liệu tự động đồng bộ đám mây!`);
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // 2. Auto-save to localStorage, and sync to Firestore when user is authenticated
   useEffect(() => {
     saveTrip(trip);
-  }, [trip]);
+
+    if (!user || isUpdatingFromCloudRef.current) return;
+
+    const timer = setTimeout(async () => {
+      const planDocPath = `userPlans/${user.uid}`;
+      try {
+        await setDoc(
+          doc(db, 'userPlans', user.uid),
+          {
+            userId: user.uid,
+            title: trip.title,
+            bags: trip.bags,
+            items: trip.items,
+            updatedAt: new Date().toISOString()
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, planDocPath);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [trip, user]);
 
   // Derived lists
   const largeBags = trip.bags.filter(b => !b.isPouch);
@@ -439,8 +526,43 @@ export default function App() {
             </div>
           </div>
 
-          {/* Primary Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end w-full sm:w-auto">
+          {/* Primary Action Buttons & Cloud Sync */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end w-full sm:w-auto flex-wrap sm:flex-nowrap">
+            {/* Account & Multi-device Cloud Sync */}
+            {user ? (
+              <div className="flex items-center gap-1.5 bg-stone-100 hover:bg-stone-200/80 px-2.5 py-1.5 rounded-xl border border-stone-200 text-xs shrink-0 transition-colors">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${isSyncing ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`} />
+                <Cloud className="w-3.5 h-3.5 text-stone-600 shrink-0" />
+                <span 
+                  className="font-semibold text-stone-800 max-w-[100px] sm:max-w-[140px] truncate" 
+                  title={user.email || 'Tài khoản'}
+                >
+                  {user.displayName || user.email?.split('@')[0]}
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logout();
+                    setToastMessage('Đã đăng xuất tài khoản.');
+                  }}
+                  className="ml-0.5 p-0.5 text-stone-400 hover:text-stone-700 rounded cursor-pointer shrink-0"
+                  title="Đăng xuất khỏi thiết bị này"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-2.5 sm:px-3 py-1.5 text-xs font-bold text-amber-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0"
+                title="Đăng ký hoặc đăng nhập để lưu trữ dữ liệu vào database và dùng trên nhiều thiết bị"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                <span>Đăng nhập / Đăng ký</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsImportModalOpen(true)}
               className="flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap cursor-pointer shadow-2xs"
@@ -881,6 +1003,12 @@ export default function App() {
         onClose={() => setIsImportModalOpen(false)}
         allBags={trip.bags}
         onImportItems={handleImportItemList}
+      />
+
+      {/* AUTH MODAL FOR DATABASE & MULTI-DEVICE CLOUD SYNC */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </div>
   );

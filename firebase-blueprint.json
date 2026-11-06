@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile details",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp"
+        }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "UserPlan": {
+      "title": "UserPlan",
+      "description": "User trip luggage and packing data across devices",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Trip title"
+        },
+        "bags": {
+          "type": "array",
+          "description": "List of large bags, suitcases and nested pouches"
+        },
+        "items": {
+          "type": "array",
+          "description": "List of packing items"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["userId", "title", "bags", "items"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user account profile"
+    },
+    "/userPlans/{userId}": {
+      "schema": "UserPlan",
+      "description": "Trip packing plan synced across devices for the authenticated user"
+    }
+  }
+}
