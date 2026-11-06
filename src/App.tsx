@@ -611,84 +611,87 @@ export default function App() {
         </div>
       </header>
 
-      {/* 2. MAIN WORKSPACE */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6 lg:pr-44 xl:pr-48 pb-24 sm:pb-12">
-        {/* TOP SHELF: ĐỒ CHƯA XẾP VÀO TÚI (Chờ đóng gói) */}
-        <section
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDropOverUnassigned(true);
-          }}
-          onDragLeave={() => setIsDropOverUnassigned(false)}
-          onDrop={handleDropOnUnassigned}
-          className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all ${
-            isDropOverUnassigned
-              ? 'border-amber-500 bg-amber-50 ring-4 ring-amber-400/20'
-              : 'border-stone-200 bg-white shadow-xs'
-          }`}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-stone-100">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-              <h2 className="text-sm font-bold text-stone-900">
-                Đồ chưa xếp vào túi ({unassignedItems.length} món)
-              </h2>
-            </div>
-
-            {/* Quick inline input to add item directly or trigger bulk import */}
-            <div className="flex items-center gap-1.5 w-full sm:w-auto">
-              <form onSubmit={handleQuickAddUnassigned} className="flex items-center gap-1.5 flex-1 sm:flex-initial">
-                <input
-                  type="text"
-                  value={quickItemText}
-                  onChange={(e) => setQuickItemText(e.target.value)}
-                  placeholder="Nhập nhanh món đồ cần pack..."
-                  className="px-3 py-1.5 text-xs border border-stone-300 rounded-lg bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 sm:w-52"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 text-xs font-bold text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  + Thêm
-                </button>
-              </form>
-
+      {/* 2. MAIN WORKSPACE WITH LEFT COLUMN */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full lg:pr-44 xl:pr-48 pb-24 sm:pb-12">
+        <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 items-start w-full">
+          {/* CỘT BÊN TRÁI: ĐỒ CHƯA XẾP VÀO TÚI */}
+          <section
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDropOverUnassigned(true);
+            }}
+            onDragLeave={() => setIsDropOverUnassigned(false)}
+            onDrop={handleDropOnUnassigned}
+            className={`w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-20 z-10 p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs ${
+              isDropOverUnassigned
+                ? 'border-amber-500 bg-amber-50/80 ring-4 ring-amber-400/20'
+                : 'border-stone-200 hover:border-stone-300'
+            }`}
+          >
+            <div className="flex items-center justify-between pb-2.5 border-b border-stone-100 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                <h2 className="text-sm font-bold text-stone-900">
+                  Đồ chưa xếp ({unassignedItems.length})
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(true)}
-                className="px-2.5 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                className="px-2 py-1 text-[11px] font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
                 title="Dán danh sách nhiều món đồ (mỗi dòng 1 món)"
               >
-                <ListPlus className="w-3.5 h-3.5 text-amber-700" />
-                <span className="hidden sm:inline">Import list</span>
+                <ListPlus className="w-3 h-3 text-amber-700" />
+                <span>Import</span>
               </button>
             </div>
-          </div>
 
-          {/* List of unassigned items */}
-          <div className="pt-3">
-            {unassignedItems.length === 0 ? (
-              <div className="py-4 text-center text-xs text-stone-400">
-                Không còn đồ nào trong hàng đợi. Tất cả đã được xếp vào các túi hoặc pouch!
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2 items-center">
-                {unassignedItems.map(item => (
-                  <ItemCard
-                    key={item.id}
-                    item={item}
-                    allBags={trip.bags}
-                    onTogglePacked={handleTogglePacked}
-                    onDeleteItem={handleDeleteItem}
-                    onMoveItem={handleMoveItem}
-                    onUpdateQuantity={handleUpdateItemQuantity}
-                    onUpdateName={handleUpdateItemName}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+            {/* Quick inline input */}
+            <form onSubmit={handleQuickAddUnassigned} className="flex items-center gap-1.5 mb-3 w-full">
+              <input
+                type="text"
+                value={quickItemText}
+                onChange={(e) => setQuickItemText(e.target.value)}
+                placeholder="Nhập tên món đồ..."
+                className="px-2.5 py-1.5 text-xs border border-stone-300 rounded-lg bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 min-w-0"
+              />
+              <button
+                type="submit"
+                className="px-2.5 py-1.5 text-xs font-bold text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                + Thêm
+              </button>
+            </form>
+
+            {/* List of unassigned items */}
+            <div className="flex-1 max-h-[50vh] lg:max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+              {unassignedItems.length === 0 ? (
+                <div className="py-6 text-center text-xs text-stone-400 border border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center">
+                  <PackageOpen className="w-5 h-5 text-stone-300 mb-1" />
+                  <span>Hàng đợi trống.</span>
+                  <span className="text-[11px] text-stone-400">Tất cả đồ đã được xếp vào túi!</span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 items-center content-start">
+                  {unassignedItems.map(item => (
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      allBags={trip.bags}
+                      onTogglePacked={handleTogglePacked}
+                      onDeleteItem={handleDeleteItem}
+                      onMoveItem={handleMoveItem}
+                      onUpdateQuantity={handleUpdateItemQuantity}
+                      onUpdateName={handleUpdateItemName}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* CỘT BÊN PHẢI: VALI LỚN & POUCH NHỎ */}
+          <div className="flex-1 min-w-0 space-y-4 sm:space-y-6 w-full">
 
         {/* SECTION 1: CÁC TÚI LỚN & VALI CHÍNH */}
         <section
@@ -941,6 +944,8 @@ export default function App() {
             </div>
           )}
         </section>
+          </div>
+        </div>
       </main>
 
       {/* 3. CLEAN FOOTER */}
