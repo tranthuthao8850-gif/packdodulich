@@ -475,7 +475,7 @@ export default function App() {
     <div className="min-h-screen bg-stone-100/70 text-stone-900 font-sans antialiased flex flex-col">
       {/* 1. CLEAN TOP BAR */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
+        <div className="w-full max-w-[1840px] mx-auto px-2.5 sm:px-4 lg:px-6 py-2 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
           {/* Brand + Trip Title */}
           <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -612,8 +612,8 @@ export default function App() {
       </header>
 
       {/* 2. MAIN WORKSPACE WITH LEFT COLUMN */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 flex-1 w-full lg:pr-44 xl:pr-48 pb-24 sm:pb-12">
-        <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 items-start w-full">
+      <main className="w-full max-w-[1840px] mx-auto px-2.5 sm:px-4 lg:px-5 py-3 sm:py-4 flex-1 lg:pr-32 xl:pr-36 pb-24 sm:pb-12">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-5 items-start w-full">
           {/* CỘT BÊN TRÁI: ĐỒ CHƯA XẾP VÀO TÚI */}
           <section
             onDragOver={(e) => {
@@ -622,7 +622,7 @@ export default function App() {
             }}
             onDragLeave={() => setIsDropOverUnassigned(false)}
             onDrop={handleDropOnUnassigned}
-            className={`w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-20 z-10 p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs ${
+            className={`w-full lg:w-64 xl:w-72 shrink-0 lg:sticky lg:top-20 z-10 p-3 sm:p-3.5 rounded-2xl border-2 transition-all flex flex-col bg-white shadow-xs ${
               isDropOverUnassigned
                 ? 'border-amber-500 bg-amber-50/80 ring-4 ring-amber-400/20'
                 : 'border-stone-200 hover:border-stone-300'
@@ -949,8 +949,8 @@ export default function App() {
       </main>
 
       {/* 3. CLEAN FOOTER */}
-      <footer className="border-t border-stone-200 py-4 px-6 text-xs text-stone-500 bg-white">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <footer className="border-t border-stone-200 py-3 sm:py-4 px-3 sm:px-6 text-xs text-stone-500 bg-white">
+        <div className="w-full max-w-[1840px] mx-auto flex items-center justify-between">
           <span>Thu Thảo đi đâu đấy? · Sắp xếp đồ du lịch & lồng ghép pouch trực quan</span>
           <button
             onClick={handleResetToDefault}

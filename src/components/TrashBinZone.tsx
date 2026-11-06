@@ -184,7 +184,7 @@ export const TrashBinZone: React.FC<TrashBinZoneProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         aria-label="Thùng rác xóa đồ"
-        className={`hidden lg:flex fixed right-4 xl:right-8 top-28 z-40 transition-all duration-200 select-none ${
+        className={`hidden lg:flex fixed right-3 xl:right-4 top-24 z-40 transition-all duration-200 select-none ${
           isDragOver
             ? 'scale-105'
             : isWindowDragging
@@ -193,7 +193,7 @@ export const TrashBinZone: React.FC<TrashBinZoneProps> = ({
         }`}
       >
         <div
-          className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all shadow-lg backdrop-blur-md cursor-pointer w-36 xl:w-40 ${
+          className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all shadow-lg backdrop-blur-md cursor-pointer w-28 xl:w-32 ${
             isDragOver
               ? 'bg-rose-500 border-rose-600 text-white ring-4 ring-rose-400/40 shadow-rose-500/25'
               : isWindowDragging
@@ -204,7 +204,7 @@ export const TrashBinZone: React.FC<TrashBinZoneProps> = ({
         >
           {/* Animated Trash Icon */}
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center mb-1.5 transition-all ${
+            className={`w-9 h-9 rounded-xl flex items-center justify-center mb-1 transition-all ${
               isDragOver
                 ? 'bg-white text-rose-600 scale-110 shadow-md rotate-6'
                 : isWindowDragging
@@ -212,19 +212,19 @@ export const TrashBinZone: React.FC<TrashBinZoneProps> = ({
                 : 'bg-stone-100 text-stone-500'
             }`}
           >
-            <Trash2 className="w-6 h-6 transition-transform" />
+            <Trash2 className="w-5 h-5 transition-transform" />
           </div>
 
-          <span className={`text-sm font-bold tracking-tight text-center ${
+          <span className={`text-xs font-bold tracking-tight text-center ${
             isDragOver ? 'text-white' : isWindowDragging ? 'text-rose-700' : 'text-stone-800'
           }`}>
             {isDragOver ? 'Thả để xoá!' : 'Thùng rác'}
           </span>
 
-          <span className={`text-[10px] text-center mt-0.5 leading-tight ${
+          <span className={`text-[9px] text-center mt-0.5 leading-tight ${
             isDragOver ? 'text-rose-100' : isWindowDragging ? 'text-rose-600 font-medium' : 'text-stone-400'
           }`}>
-            {isDragOver ? 'Bỏ tay để xoá ngay' : 'Kéo đồ vào đây để xoá'}
+            {isDragOver ? 'Thả tay để xoá' : 'Kéo vào đây để xoá'}
           </span>
         </div>
       </aside>
